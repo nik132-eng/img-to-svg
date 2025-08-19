@@ -256,11 +256,12 @@ export default function HomePage() {
                     src="/paint-palette.gif"
                     alt="Image to SVG Converter logo"
                     className="w-full h-full object-contain"
+                    loading="eager"
                   />
                 </div>
                 <div>
                   <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-800 leading-tight">
-                    Image to SVG Converter
+                    Convert Image to SVG Online – Free & Instant
                   </h1>
                 </div>
               </div>
@@ -273,6 +274,43 @@ export default function HomePage() {
 
         {/* Main Content */}
         <div className="flex-1 w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 main-content">
+          {/* SEO Content Section */}
+          <div className="hidden">
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+                How to Convert Image to SVG
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base max-w-3xl mx-auto">
+                Transform your JPG, PNG, GIF, or BMP images into scalable SVG vector graphics in just 3 simple steps. 
+                No software installation required - everything happens in your browser for maximum privacy and speed.
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl font-bold text-blue-600">1</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Upload Image</h3>
+                  <p className="text-sm text-gray-600">Drag & drop or click to upload your image file</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl font-bold text-green-600">2</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Convert to SVG</h3>
+                  <p className="text-sm text-gray-600">Click convert and wait for processing to complete</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl font-bold text-purple-600">3</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Download Result</h3>
+                  <p className="text-sm text-gray-600">Download your SVG file or copy the code</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Error Display */}
           {error && (
             <div className="mb-4 bg-red-50/95 backdrop-blur-sm border border-red-200 rounded-2xl p-3 shadow-lg">
@@ -312,6 +350,24 @@ export default function HomePage() {
                   onClear={handleClearImage}
                   currentImage={image}
                 />
+                
+                {/* Usage Instructions */}
+                <div className="hidden">
+                  <div className="flex items-start space-x-2">
+                    <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium mb-1">Quick Tips:</p>
+                      <ul className="space-y-1 text-xs">
+                        <li>• Drag & drop images directly onto the upload area</li>
+                        <li>• Press <kbd className="px-1 py-0.5 bg-blue-200 rounded text-xs">Ctrl+V</kbd> to paste from clipboard</li>
+                        <li>• Supported formats: JPG, PNG, GIF, BMP, WebP</li>
+                        <li>• Maximum file size: 10MB for best results</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
                 
                 {image && (
                   <div className="mt-3 sm:mt-4 space-y-3">
@@ -460,6 +516,128 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Benefits Section */}
+      <div className="relative z-10 bg-white/90 backdrop-blur-md py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+              Why Use Our SVG Converter?
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Discover the advantages of converting your images to scalable vector graphics
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Lightning Fast</h3>
+              <p className="text-gray-600">Convert images to SVG in seconds, not minutes. Our optimized algorithms ensure quick processing.</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">100% Private</h3>
+              <p className="text-gray-600">Your images never leave your browser. All processing happens locally for complete privacy.</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Completely Free</h3>
+              <p className="text-gray-600">No hidden costs, no watermarks, no limitations. Convert as many images as you want.</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">High Quality</h3>
+              <p className="text-gray-600">Advanced vectorization algorithms ensure your SVGs maintain crisp quality at any size.</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Mobile Friendly</h3>
+              <p className="text-gray-600">Works perfectly on all devices - desktop, tablet, and mobile. Convert images anywhere.</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Multiple Formats</h3>
+              <p className="text-gray-600">Support for JPG, PNG, GIF, BMP, and WebP. Convert any image format to SVG.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* FAQ Section */}
+      <div className="relative z-10 bg-gray-50/80 backdrop-blur-md py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-lg text-gray-600">
+              Everything you need to know about converting images to SVG
+            </p>
+          </div>
+          
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Is this tool really free?</h3>
+              <p className="text-gray-600">Yes! Our image to SVG converter is completely free to use. No registration required, no hidden costs, and no watermarks on your converted files.</p>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Do you store my images?</h3>
+              <p className="text-gray-600">No, we never store your images. All processing happens locally in your browser, ensuring complete privacy and security of your files.</p>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">What image formats are supported?</h3>
+              <p className="text-gray-600">We support JPG, JPEG, PNG, GIF, BMP, and WebP formats. Simply upload any of these image types and convert them to SVG.</p>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Can I edit the SVG after conversion?</h3>
+              <p className="text-gray-600">Absolutely! SVGs are fully editable vector files. You can open them in Adobe Illustrator, Figma, Inkscape, or any vector graphics editor.</p>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Why should I convert to SVG?</h3>
+              <p className="text-gray-600">SVGs are scalable without quality loss, have smaller file sizes, and are perfect for logos, icons, and web graphics. They also work great with cutting machines like Cricut.</p>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">How long does conversion take?</h3>
+              <p className="text-gray-600">Most images convert in under 10 seconds. Complex images with many colors may take a bit longer, but our optimized algorithms ensure fast processing.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Footer - Always at Bottom */}
       <div className="relative z-10 flex-shrink-0">
         {/* Glass effect background */}
@@ -485,20 +663,45 @@ export default function HomePage() {
         onToggle={() => setShowSettings(!showSettings)}
       />
 
-      {/* Structured Data: SoftwareApplication */}
+      {/* Structured Data: WebApplication */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'SoftwareApplication',
-            name: 'Image to SVG Converter',
+            '@type': 'WebApplication',
+            name: 'Free Image to SVG Converter Online',
+            description: 'Convert JPG, PNG, or GIF images to SVG vector format online for free. No software needed. Fast, easy, and privacy-friendly.',
             applicationCategory: 'MultimediaApplication',
-            operatingSystem: 'Web',
-            offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            operatingSystem: 'Any',
+            browserRequirements: 'Requires JavaScript. Requires HTML5.',
+            offers: { 
+              '@type': 'Offer', 
+              price: '0', 
+              priceCurrency: 'USD',
+              description: 'Completely free to use'
+            },
             url: '/',
-            description:
-              'Free online image to SVG converter. Instantly vectorize PNG, JPG, GIF, BMP, and WebP images to clean, scalable SVGs.',
+            author: {
+              '@type': 'Person',
+              name: 'Nikunj Rohit',
+              url: 'https://x.com/nikunj_rohit10'
+            },
+            featureList: [
+              'Convert JPG to SVG',
+              'Convert PNG to SVG', 
+              'Convert GIF to SVG',
+              'Convert BMP to SVG',
+              'Convert WebP to SVG',
+              'Free online tool',
+              'No registration required',
+              'Privacy-focused processing',
+              'High-quality vectorization',
+              'Mobile-friendly interface'
+            ],
+            screenshot: '/og-image.png',
+            softwareVersion: '1.0',
+            releaseNotes: 'Free online image to SVG converter with advanced vectorization algorithms'
           }),
         }}
       />
@@ -511,29 +714,37 @@ export default function HomePage() {
             '@context': 'https://schema.org',
             '@type': 'HowTo',
             name: 'How to convert an image to SVG online',
-            description:
-              'Use this free online tool to convert PNG, JPG, JPEG, GIF, BMP, or WebP images into scalable SVG vector graphics.',
+            description: 'Use this free online tool to convert PNG, JPG, JPEG, GIF, BMP, or WebP images into scalable SVG vector graphics.',
             totalTime: 'PT1M',
+            estimatedCost: {
+              '@type': 'MonetaryAmount',
+              currency: 'USD',
+              value: '0'
+            },
             step: [
               {
                 '@type': 'HowToStep',
                 name: 'Upload your image',
                 text: 'Click Upload and choose a PNG, JPG, JPEG, GIF, BMP, or WebP file, or paste an image from your clipboard.',
+                image: '/og-image.png'
               },
               {
                 '@type': 'HowToStep',
                 name: 'Adjust settings (optional)',
                 text: 'Open Advanced Settings to fine‑tune color precision, speckle filter, and tracing mode for best results.',
+                image: '/og-image.png'
               },
               {
                 '@type': 'HowToStep',
                 name: 'Convert to SVG',
                 text: 'Press Convert to SVG and wait a moment for vectorization to complete.',
+                image: '/og-image.png'
               },
               {
                 '@type': 'HowToStep',
                 name: 'Download or copy code',
                 text: 'Preview the result, then download the SVG file or copy the SVG code to your clipboard.',
+                image: '/og-image.png'
               },
             ],
           }),
@@ -550,20 +761,26 @@ export default function HomePage() {
             mainEntity: [
               {
                 '@type': 'Question',
-                name: 'What is an SVG file?',
+                name: 'Is this tool really free?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text:
-                    'SVG (Scalable Vector Graphics) is a vector image format that scales without losing quality and is ideal for logos, icons, and illustrations.',
+                  text: 'Yes! Our image to SVG converter is completely free to use. No registration required, no hidden costs, and no watermarks on your converted files.',
                 },
               },
               {
                 '@type': 'Question',
-                name: 'Why convert PNG or JPG to SVG?',
+                name: 'Do you store my images?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text:
-                    'SVGs remain crisp at any size, can be edited in vector design tools, and often have smaller file sizes compared to raster images.',
+                  text: 'No, we never store your images. All processing happens locally in your browser, ensuring complete privacy and security of your files.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'What image formats are supported?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'We support JPG, JPEG, PNG, GIF, BMP, and WebP formats. Simply upload any of these image types and convert them to SVG.',
                 },
               },
               {
@@ -571,8 +788,23 @@ export default function HomePage() {
                 name: 'Can I edit the SVG after conversion?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text:
-                    'Yes. You can open the SVG in tools like Adobe Illustrator, Figma, or Inkscape, or edit the XML directly in a code editor.',
+                  text: 'Absolutely! SVGs are fully editable vector files. You can open them in Adobe Illustrator, Figma, Inkscape, or any vector graphics editor.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'Why should I convert to SVG?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'SVGs are scalable without quality loss, have smaller file sizes, and are perfect for logos, icons, and web graphics. They also work great with cutting machines like Cricut.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'How long does conversion take?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Most images convert in under 10 seconds. Complex images with many colors may take a bit longer, but our optimized algorithms ensure fast processing.',
                 },
               },
             ],
