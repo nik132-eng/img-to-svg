@@ -1,3 +1,5 @@
+'use client';
+
 import { useRef, useMemo } from 'react';
 import { useFrame, Canvas } from '@react-three/fiber';
 import { Float, Sphere, Box, Torus } from '@react-three/drei';
@@ -9,7 +11,7 @@ function FloatingShapes() {
   const shapes = useMemo(() => {
     const temp = [];
     // Reduce number of shapes on mobile for better performance
-    const shapeCount = window.innerWidth < 768 ? 8 : 12;
+    const shapeCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 8 : 12;
     
     for (let i = 0; i < shapeCount; i++) {
       temp.push({

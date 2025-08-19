@@ -1,37 +1,46 @@
 {
   "name": "image-to-svg-converter",
-  "version": "1.0.0",
-  "description": "Full-stack Image to SVG Converter with React frontend and Fastify backend",
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
+  "version": "2.0.0",
+  "description": "Full-stack Image to SVG Converter with Next.js 15 frontend and API routes",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:frontend": "npm run dev --workspace=frontend",
-    "dev:backend": "npm run dev --workspace=backend",
-    "build": "npm run build:backend && npm run build:frontend",
-    "build:frontend": "npm run build --workspace=frontend",
-    "build:backend": "npm run build --workspace=backend",
-    "install:all": "npm install",
-    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "start:frontend": "npm run preview --workspace=frontend",
-    "start:backend": "npm start --workspace=backend",
-    "clean": "rm -rf node_modules frontend/node_modules backend/node_modules",
-    "clean:install": "npm run clean && npm install"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "keywords": [
     "svg",
     "converter",
+    "nextjs",
     "react",
-    "fastify",
     "vtracer",
     "fullstack",
-    "monorepo"
+    "vectorization"
   ],
-  "author": "",
+  "author": "Nikunj Rohit",
   "license": "ISC",
+  "dependencies": {
+    "@neplex/vectorizer": "^0.0.5",
+    "@react-three/drei": "^10.7.3",
+    "@react-three/fiber": "^9.3.0",
+    "next": "15.2.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-dropzone": "^14.3.8",
+    "svgo": "^3.2.0",
+    "three": "^0.179.1"
+  },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@types/three": "^0.179.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.33.0",
+    "eslint-config-next": "15.2.4",
+    "node-loader": "^2.1.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.8.3"
   }
 }

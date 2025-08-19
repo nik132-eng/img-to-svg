@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
-import { ImageUploader } from './components/ImageUploader';
-import { ThreeBackground } from './components/ThreeBackground';
-import { VisitorCounter } from './components/VisitorCounter';
-import { ConversionSettings, ConversionSettings as ConversionSettingsType } from './components/ConversionSettings';
+'use client';
 
-function App() {
+import { useState, useEffect } from 'react';
+import { ImageUploader } from '@/components/ImageUploader';
+import { ThreeBackground } from '@/components/ThreeBackground';
+import { VisitorCounter } from '@/components/VisitorCounter';
+import { ConversionSettings, ConversionSettings as ConversionSettingsType } from '@/components/ConversionSettings';
+
+export default function HomePage() {
   const [image, setImage] = useState<File | null>(null);
   const [svg, setSvg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,8 +52,8 @@ function App() {
         pathPrecision: conversionSettings.pathPrecision.toString(),
       });
 
-      console.log('Sending request to:', `http://localhost:3001/api/convert?${params}`);
-      const response = await fetch(`http://localhost:3001/api/convert?${params}`, {
+      console.log('Sending request to:', `/api/convert?${params}`);
+      const response = await fetch(`/api/convert?${params}`, {
         method: 'POST',
         body: formData
       });
@@ -406,7 +408,7 @@ function App() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
                           onClick={handleDownload}
-                          className="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2 px-4 rounded-2xl font-bold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs"
+                          className="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2 px-4 rounded-2xl font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -416,7 +418,7 @@ function App() {
                         
                         <button
                           onClick={handleCopyCode}
-                          className={`py-2 px-4 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs ${
+                          className={`py-2 px-4 rounded-2xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs ${
                             copySuccess 
                               ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white' 
                               : 'bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800'
@@ -480,5 +482,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

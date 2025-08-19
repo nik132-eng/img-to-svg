@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 
 interface ConversionSettingsProps {
@@ -38,7 +40,7 @@ export function ConversionSettings({ onSettingsChange, isOpen, onToggle }: Conve
   const [settings, setSettings] = useState<ConversionSettings>(defaultSettings);
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
 
-  const handleSettingChange = (key: keyof ConversionSettings, value: any) => {
+  const handleSettingChange = (key: keyof ConversionSettings, value: string | number) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
     onSettingsChange(newSettings);
