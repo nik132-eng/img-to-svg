@@ -28,7 +28,7 @@ export function UploadSection() {
         <div className="flex items-center justify-between mt-4">
           <button
             onClick={() => setShowSettings(true)}
-            className="text-sm font-medium text-blue-700 hover:text-blue-800"
+            className="text-sm font-medium text-gray-700 hover:text-gray-800"
           >
             Advanced settings
           </button>

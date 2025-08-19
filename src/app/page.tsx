@@ -259,7 +259,7 @@ export default function HomePage() {
                   />
                 </div>
                 <div>
-                  <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent leading-tight">
+                  <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-800 leading-tight">
                     Image to SVG Converter
                   </h1>
                 </div>
@@ -296,7 +296,7 @@ export default function HomePage() {
             <div className="space-y-4">
               <div className="bg-white/80 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-white/40 p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                  <div className="w-10 h-10 bg-gray-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -320,7 +320,7 @@ export default function HomePage() {
                       <button
                         onClick={handleConvert}
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-bold hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl text-xs sm:text-sm"
+                        className="w-full bg-gray-700 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-bold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl text-xs sm:text-sm"
                       >
                         {loading ? (
                           <div className="flex items-center justify-center space-x-2">
@@ -467,7 +467,7 @@ export default function HomePage() {
           {/* Content */}
           <div className="text-center text-gray-700 text-xs sm:text-sm px-6 sm:px-8 py-6 sm:py-8">
             <p className="leading-relaxed font-medium">
-              Powered by <span className="font-bold text-blue-600">Nikunj Rohit</span> with ❤️ • 
+              Powered by <span className="font-bold text-gray-700">Nikunj Rohit</span> with ❤️ • 
               <span className="hidden sm:inline"> Supports multiple image formats • Optimized SVG output</span>
               <span className="sm:hidden"> Multiple formats • Optimized output</span>
             </p>

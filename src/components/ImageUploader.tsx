@@ -59,7 +59,7 @@ export function ImageUploader({ onImageSelect, currentImage }: ImageUploaderProp
               />
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 rounded-lg flex items-center justify-center">
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white bg-opacity-90 rounded-full p-2">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -76,8 +76,8 @@ export function ImageUploader({ onImageSelect, currentImage }: ImageUploaderProp
           <div className="space-y-3 sm:space-y-4">
             {/* Professional Upload Area */}
             <div className="relative">
-              <div className={`w-14 h-14 sm:w-18 sm:h-18 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg transition-transform duration-300 ${isDragActive ? 'scale-110' : ''}`}>
-                <svg className="w-7 h-7 sm:w-9 sm:h-9 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`w-14 h-14 sm:w-18 sm:h-18 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg transition-transform duration-300 ${isDragActive ? 'scale-110' : ''}`}>
+                <svg className="w-7 h-7 sm:w-9 sm:h-9 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
@@ -92,7 +92,7 @@ export function ImageUploader({ onImageSelect, currentImage }: ImageUploaderProp
             
             <div className="space-y-2">
               <h3 className={`text-lg sm:text-xl font-bold transition-colors duration-300 ${
-                isDragActive ? 'text-blue-600' : isDragReject ? 'text-red-600' : 'text-gray-800'
+                isDragActive ? 'text-gray-600' : isDragReject ? 'text-red-600' : 'text-gray-800'
               }`}>
                 {isDragActive 
                   ? 'DROP YOUR IMAGE HERE!' 
@@ -133,7 +133,7 @@ export function ImageUploader({ onImageSelect, currentImage }: ImageUploaderProp
                 <div className="flex items-center justify-center space-x-2 sm:space-x-3 mt-3">
                   <div className="text-center">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-1">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                       </svg>
                     </div>
