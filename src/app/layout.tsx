@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     "best free online image to svg converter", "how to convert png to svg without software", "online tool to vectorize a drawing",
     "what is the best way to convert a jpg to svg"
   ],
-  authors: [{ name: "Nikunj Rohit", url: "https://your-portfolio-or-social-link.com" }],
+  authors: [{ name: "Nikunj Rohit", url: "https://github.com/nik132-eng" }],
   creator: "Nikunj Rohit",
   alternates: {
     canonical: "/",
@@ -56,6 +56,7 @@ export const metadata: Metadata = {
     title: "Free Online Image to SVG Converter",
     description: "Instantly convert your raster images (PNG, JPG) into clean, scalable SVG vector graphics. Free, fast, and no registration required.",
     images: ['/og-image.png'],
+    creator: '@nikunj_rohit10',
   },
   robots: "index, follow",
   icons: {

@@ -467,7 +467,10 @@ export default function HomePage() {
           {/* Content */}
           <div className="text-center text-gray-700 text-xs sm:text-sm px-6 sm:px-8 py-6 sm:py-8">
             <p className="leading-relaxed font-medium">
-              Powered by <span className="font-bold text-gray-700">Nikunj Rohit</span> with ❤️ • 
+              Powered by <span className="font-bold text-gray-700">
+              <a href="https://x.com/nikunj_rohit10" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 transition-colors">@nikunj_rohit10</a>
+                </span> with ❤️ 
+              <a href="https://github.com/nik132-eng/img-to-svg" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-gray-800 transition-colors"> GitHub</a>
               <span className="hidden sm:inline"> Supports multiple image formats • Optimized SVG output</span>
               <span className="sm:hidden"> Multiple formats • Optimized output</span>
             </p>
