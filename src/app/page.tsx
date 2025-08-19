@@ -251,10 +251,12 @@ export default function HomePage() {
             <div className="flex items-center justify-between">
               {/* Left side - Logo and Title */}
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                  </svg>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0 overflow-hidden">
+                  <img
+                    src="/paint-palette.gif"
+                    alt="Image to SVG Converter logo"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div>
                   <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent leading-tight">
@@ -478,6 +480,101 @@ export default function HomePage() {
         onSettingsChange={setConversionSettings}
         isOpen={showSettings}
         onToggle={() => setShowSettings(!showSettings)}
+      />
+
+      {/* Structured Data: SoftwareApplication */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Image to SVG Converter',
+            applicationCategory: 'MultimediaApplication',
+            operatingSystem: 'Web',
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            url: '/',
+            description:
+              'Free online image to SVG converter. Instantly vectorize PNG, JPG, GIF, BMP, and WebP images to clean, scalable SVGs.',
+          }),
+        }}
+      />
+
+      {/* Structured Data: HowTo */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'HowTo',
+            name: 'How to convert an image to SVG online',
+            description:
+              'Use this free online tool to convert PNG, JPG, JPEG, GIF, BMP, or WebP images into scalable SVG vector graphics.',
+            totalTime: 'PT1M',
+            step: [
+              {
+                '@type': 'HowToStep',
+                name: 'Upload your image',
+                text: 'Click Upload and choose a PNG, JPG, JPEG, GIF, BMP, or WebP file, or paste an image from your clipboard.',
+              },
+              {
+                '@type': 'HowToStep',
+                name: 'Adjust settings (optional)',
+                text: 'Open Advanced Settings to fine‑tune color precision, speckle filter, and tracing mode for best results.',
+              },
+              {
+                '@type': 'HowToStep',
+                name: 'Convert to SVG',
+                text: 'Press Convert to SVG and wait a moment for vectorization to complete.',
+              },
+              {
+                '@type': 'HowToStep',
+                name: 'Download or copy code',
+                text: 'Preview the result, then download the SVG file or copy the SVG code to your clipboard.',
+              },
+            ],
+          }),
+        }}
+      />
+
+      {/* Structured Data: FAQPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              {
+                '@type': 'Question',
+                name: 'What is an SVG file?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text:
+                    'SVG (Scalable Vector Graphics) is a vector image format that scales without losing quality and is ideal for logos, icons, and illustrations.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'Why convert PNG or JPG to SVG?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text:
+                    'SVGs remain crisp at any size, can be edited in vector design tools, and often have smaller file sizes compared to raster images.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'Can I edit the SVG after conversion?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text:
+                    'Yes. You can open the SVG in tools like Adobe Illustrator, Figma, or Inkscape, or edit the XML directly in a code editor.',
+                },
+              },
+            ],
+          }),
+        }}
       />
     </div>
   );
