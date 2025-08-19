@@ -2,24 +2,11 @@
 
 import { useState } from 'react';
 import { ImageUploader } from '@/components/ImageUploader';
-import { ConversionSettings, ConversionSettings as ConversionSettingsType } from '@/components/ConversionSettings';
+import { ConversionSettings } from '@/components/ConversionSettings';
 
 export function UploadSection() {
   const [image, setImage] = useState<File | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [conversionSettings, setConversionSettings] = useState<ConversionSettingsType>({
-    colorMode: 'color',
-    colorPrecision: 6,
-    filterSpeckle: 4,
-    spliceThreshold: 45,
-    cornerThreshold: 60,
-    hierarchical: 'stacked',
-    mode: 'spline',
-    layerDifference: 5,
-    lengthThreshold: 5,
-    maxIterations: 2,
-    pathPrecision: 5,
-  });
 
   return (
     <section className="space-y-4">
@@ -39,7 +26,7 @@ export function UploadSection() {
       <ConversionSettings
         isOpen={showSettings}
         onToggle={() => setShowSettings((s) => !s)}
-        onSettingsChange={setConversionSettings}
+        onSettingsChange={() => {}} // Empty function since we don't need to handle settings here
       />
     </section>
   );

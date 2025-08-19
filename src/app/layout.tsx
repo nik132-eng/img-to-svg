@@ -61,13 +61,18 @@ export const metadata: Metadata = {
   robots: "index, follow",
   icons: {
     icon: [
-      { url: "/paint-palette.gif?v=1", type: "image/gif" },
-      "/favicon.ico",
+      { url: "/paint-palette.gif", type: "image/gif" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
     shortcut: [
-      { url: "/paint-palette.gif?v=1", type: "image/gif" },
+      { url: "/paint-palette.gif", type: "image/gif" },
+      "/favicon.ico",
     ],
-    apple: "/apple-touch-icon.png?v=2",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   category: "technology",
 };
@@ -85,6 +90,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/gif" href="/paint-palette.gif" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+      </head>
       <body suppressHydrationWarning className="antialiased">
         {children}
       </body>
