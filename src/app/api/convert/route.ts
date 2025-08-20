@@ -15,6 +15,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate that imageFile is actually a File object
+    if (!(imageFile instanceof File)) {
+      return NextResponse.json(
+        { error: 'Invalid file object received' },
+        { status: 400 }
+      );
+    }
+
+    // Validate file properties
+    if (!imageFile.name || imageFile.size === 0) {
+      return NextResponse.json(
+        { error: 'Invalid file: missing name or empty file' },
+        { status: 400 }
+      );
+    }
+
+    // Check if arrayBuffer method exists
+    if (typeof imageFile.arrayBuffer !== 'function') {
+      console.error('File validation failed:', {
+        name: imageFile.name,
+        size: imageFile.size,
+        type: imageFile.type,
+        constructor: imageFile.constructor.name,
+        hasArrayBuffer: typeof imageFile.arrayBuffer,
+        keys: Object.keys(imageFile)
+      });
+      return NextResponse.json(
+        { error: 'Invalid file object: missing arrayBuffer method' },
+        { status: 400 }
+      );
+    }
+
+
     // Get conversion settings from query parameters
     const searchParams = request.nextUrl.searchParams;
     const colorModeParam = searchParams.get('colorMode') || 'color';

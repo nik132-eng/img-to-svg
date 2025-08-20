@@ -2,16 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { ImageUploader } from '@/components/ImageUploader';
+import { BulkImageUploader } from '@/components/BulkImageUploader';
+import { ConversionQueue } from '@/components/ConversionQueue';
+import { ZipDownloader } from '@/components/ZipDownloader';
 import { ThreeBackground } from '@/components/ThreeBackground';
 import { VisitorCounter } from '@/components/VisitorCounter';
 import { ConversionSettings, ConversionSettings as ConversionSettingsType } from '@/components/ConversionSettings';
 
 export default function HomePage() {
   const [image, setImage] = useState<File | null>(null);
+  const [images, setImages] = useState<File[]>([]);
   const [svg, setSvg] = useState<string | null>(null);
+  const [conversionResults, setConversionResults] = useState<{ fileName: string; svgContent: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [useBulkMode, setUseBulkMode] = useState(false);
   const [conversionSettings, setConversionSettings] = useState<ConversionSettingsType>({
     colorMode: 'color',
     colorPrecision: 6,
@@ -328,31 +334,88 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Main Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 mb-4 main-grid">
-            {/* Left Panel - Image Upload */}
-            <div className="space-y-4">
-              <div className="bg-white/80 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-white/40 p-3 sm:p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-gray-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div className="text-center sm:text-left">
-                    <h2 className="text-xl font-bold text-gray-900">Original Image</h2>
-                    <p className="text-xs text-gray-600 mt-1">Upload your image to convert</p>
-                  </div>
+        {/* Bulk Mode Toggle */}
+        <div className="mb-4 flex justify-center">
+          <div className="bg-white/80 backdrop-blur-md rounded-2xl p-2 border border-white/40 shadow-lg">
+            <div className="flex space-x-1">
+              <button
+                onClick={() => setUseBulkMode(false)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  !useBulkMode
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                }`}
+              >
+                Single Image
+              </button>
+              <button
+                onClick={() => setUseBulkMode(true)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  useBulkMode
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                }`}
+              >
+                Bulk Convert (New!)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 mb-4 main-grid">
+          {/* Left Panel - Image Upload */}
+          <div className="space-y-4">
+            <div className="bg-white/80 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-white/40 p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-4">
+                <div className="w-10 h-10 bg-gray-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
                 </div>
-                
+                <div className="text-center sm:text-left">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {useBulkMode ? 'Original Images' : 'Original Image'}
+                  </h2>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {useBulkMode ? 'Upload multiple images to convert' : 'Upload your image to convert'}
+                  </p>
+                </div>
+              </div>
+              
+              {useBulkMode ? (
+                <BulkImageUploader 
+                  onImagesSelect={setImages} 
+                  onClear={() => {
+                    setImages([]);
+                    setConversionResults([]);
+                  }}
+                  currentImages={images}
+                />
+              ) : (
                 <ImageUploader 
                   onImageSelect={setImage} 
                   onClear={handleClearImage}
                   currentImage={image}
                 />
-                
-                {/* Usage Instructions */}
-                <div className="hidden">
+                            )}
+              
+              {/* Bulk Conversion Queue */}
+              {useBulkMode && images.length > 0 && (
+                <div className="mt-4">
+                  <ConversionQueue
+                    files={images}
+                    onConversionComplete={setConversionResults}
+                    onQueueUpdate={() => {}}
+                    conversionSettings={conversionSettings}
+                  />
+                </div>
+              )}
+              
+
+              
+              {/* Usage Instructions */}
+              <div className="hidden">
                   <div className="flex items-start space-x-2">
                     <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -437,6 +500,61 @@ export default function HomePage() {
                         <p className="text-xs text-gray-500 mt-1">This may take a few moments</p>
                       </div>
                     </div>
+                  ) : useBulkMode && conversionResults.length > 0 ? (
+                    <div className="w-full space-y-4">
+                      <div className="text-center mb-3">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                          {conversionResults.length} SVG{conversionResults.length !== 1 ? 's' : ''} Converted
+                        </h3>
+                        <p className="text-sm text-gray-600">Preview your converted vector graphics</p>
+                      </div>
+                      
+                      <div className="space-y-3 max-h-64 overflow-y-auto">
+                        {conversionResults.map((result, index) => (
+                          <div key={index} className="bg-white/95 backdrop-blur-sm border border-gray-200/60 rounded-xl p-3 shadow-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-sm font-medium text-gray-800 truncate" title={result.fileName}>
+                                {result.fileName.replace(/\.[^/.]+$/, '.svg')}
+                              </h4>
+                              <span className="text-xs text-gray-500">#{index + 1}</span>
+                            </div>
+                            <div 
+                              className="w-full h-32 flex items-center justify-center bg-white rounded-lg border border-gray-100 overflow-hidden"
+                              style={{ 
+                                minHeight: '128px',
+                                aspectRatio: 'auto'
+                              }}
+                            >
+                              <div 
+                                dangerouslySetInnerHTML={{ __html: renderSVG(result.svgContent) }} 
+                                className="w-full h-full flex items-center justify-center"
+                                style={{ 
+                                  backgroundColor: 'white',
+                                  minWidth: '120px',
+                                  minHeight: '120px',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '6px',
+                                  objectFit: 'contain',
+                                  aspectRatio: 'auto'
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="text-center mb-4">
+                        <p className="text-sm text-gray-600 mb-3">
+                          All conversions completed successfully!
+                        </p>
+                        
+                        {/* ZIP Downloader integrated into the right panel */}
+                        <ZipDownloader
+                          conversionResults={conversionResults}
+                          isVisible={true}
+                        />
+                      </div>
+                    </div>
                   ) : svg ? (
                     <div className="w-full space-y-4">
                       <div className="bg-white/95 backdrop-blur-sm border border-gray-200/60 rounded-2xl p-3 shadow-lg">
@@ -479,7 +597,7 @@ export default function HomePage() {
                           className={`py-2 px-4 rounded-2xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs ${
                             copySuccess 
                               ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white' 
-                              : 'bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800'
+                              : 'bg-gray-600 text-white hover:bg-gray-700'
                           }`}
                         >
                           {copySuccess ? (
@@ -504,8 +622,12 @@ export default function HomePage() {
                     <div className="text-center space-y-3">
                       <div className="text-4xl lg:text-5xl text-gray-300">🎨</div>
                       <div>
-                        <p className="text-lg font-bold text-gray-500">SVG preview will appear here</p>
-                        <p className="text-xs text-gray-400 mt-1">Upload an image and convert it to see the result</p>
+                        <p className="text-lg font-bold text-gray-500">
+                          {useBulkMode ? 'Ready for bulk conversion' : 'SVG preview will appear here'}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {useBulkMode ? 'Upload images and start converting to see results here' : 'Upload an image and convert it to see the result'}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -515,6 +637,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+
 
       {/* Benefits Section */}
       <div className="relative z-10 bg-white/90 backdrop-blur-md py-12 px-4 sm:px-6 lg:px-8">
@@ -662,6 +786,8 @@ export default function HomePage() {
         isOpen={showSettings}
         onToggle={() => setShowSettings(!showSettings)}
       />
+
+
 
       {/* Structured Data: WebApplication */}
       <script
