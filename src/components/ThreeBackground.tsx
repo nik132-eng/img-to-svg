@@ -10,8 +10,9 @@ function FloatingShapes() {
 
   const shapes = useMemo(() => {
     const temp = [];
-    // Reduce number of shapes on mobile for better performance
-    const shapeCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 8 : 12;
+    // Use a fixed number of shapes to avoid hydration mismatches
+    // Mobile optimization will be handled by CSS media queries
+    const shapeCount = 12;
     
     for (let i = 0; i < shapeCount; i++) {
       temp.push({

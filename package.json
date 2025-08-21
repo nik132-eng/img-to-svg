@@ -24,6 +24,7 @@
     "@react-three/drei": "^10.7.3",
     "@react-three/fiber": "^9.3.0",
     "@types/jszip": "^3.4.0",
+    "critters": "^0.0.23",
     "jszip": "^3.10.1",
     "next": "15.2.4",
     "react": "^19.1.1",

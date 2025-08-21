@@ -1,13 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { ImageUploader } from '@/components/ImageUploader';
 import { BulkImageUploader } from '@/components/BulkImageUploader';
 import { ConversionQueue } from '@/components/ConversionQueue';
 import { ZipDownloader } from '@/components/ZipDownloader';
-import { ThreeBackground } from '@/components/ThreeBackground';
-import { VisitorCounter } from '@/components/VisitorCounter';
-import { ConversionSettings, ConversionSettings as ConversionSettingsType } from '@/components/ConversionSettings';
+import { ConversionSettings as ConversionSettingsType } from '@/components/ConversionSettings';
+import React from 'react'; // Added for React.useMemo
+
+// Lazy load the ThreeBackground component to reduce initial bundle size
+const LazyThreeBackground = React.lazy(() => import('@/components/ThreeBackground').then(module => ({ default: module.ThreeBackground })));
+
+// Lazy load heavy components
+const LazyConversionSettings = React.lazy(() => import('@/components/ConversionSettings').then(module => ({ default: module.ConversionSettings })));
+const LazyVisitorCounter = React.lazy(() => import('@/components/VisitorCounter').then(module => ({ default: module.VisitorCounter })));
+
+// Performance monitoring (development only)
+const PerformanceMonitor = React.lazy(() => import('@/components/PerformanceMonitor').then(module => ({ default: module.PerformanceMonitor })));
 
 export default function HomePage() {
   const [image, setImage] = useState<File | null>(null);
@@ -18,6 +28,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [useBulkMode, setUseBulkMode] = useState(false);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false); // Add this state
   const [conversionSettings, setConversionSettings] = useState<ConversionSettingsType>({
     colorMode: 'color',
     colorPrecision: 6,
@@ -175,79 +186,81 @@ export default function HomePage() {
     return () => document.removeEventListener('paste', handlePaste);
   }, []);
 
-  const renderSVG = (svgContent: string) => {
+  const renderSVG = React.useCallback((svgContent: string): string => {
     try {
-      console.log('renderSVG called with content length:', svgContent.length);
-      console.log('SVG content preview:', svgContent.substring(0, 200) + '...');
-      
-      // Create a temporary div to parse and validate the SVG
+      // Use a more efficient approach - create div directly
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = svgContent;
       
-      // Check if we have a valid SVG element
       const svgElement = tempDiv.querySelector('svg');
       if (!svgElement) {
-        console.error('No SVG element found in content');
-        throw new Error('Invalid SVG content');
+        return svgContent; // Return original if no SVG found
       }
-      
-      console.log('SVG element found:', svgElement);
 
-      // Preserve original viewBox if it exists
-      const originalViewBox = svgElement.getAttribute('viewBox');
+      // Batch style changes to reduce reflows
+      const styles = {
+        width: '100%',
+        height: '100%',
+        maxWidth: '100%',
+        maxHeight: '100%',
+        objectFit: 'contain',
+        overflow: 'visible',
+        display: 'block',
+        margin: '0 auto',
+        backgroundColor: 'white',
+        minWidth: '200px',
+        minHeight: '200px',
+        aspectRatio: 'auto'
+      };
+
+      // Apply all styles at once
+      Object.assign(svgElement.style, styles);
       
-      // Set proper styling for the SVG to prevent stretching
-      svgElement.style.width = '100%';
-      svgElement.style.height = '100%';
-      svgElement.style.maxWidth = '100%';
-      svgElement.style.maxHeight = '100%';
-      svgElement.style.objectFit = 'contain';
-      svgElement.style.overflow = 'visible';
-      svgElement.style.display = 'block';
-      svgElement.style.margin = '0 auto';
-      
-      // Ensure viewBox is set for proper scaling
-      if (!originalViewBox) {
-        // Try to get dimensions from the SVG content
+      // Set viewBox efficiently
+      if (!svgElement.getAttribute('viewBox')) {
         const width = svgElement.getAttribute('width');
         const height = svgElement.getAttribute('height');
         
         if (width && height && !isNaN(Number(width)) && !isNaN(Number(height))) {
           svgElement.setAttribute('viewBox', `0 0 ${width} ${height}`);
         } else {
-          // Fallback to default viewBox
           svgElement.setAttribute('viewBox', '0 0 100 100');
         }
       }
 
-      // Add a white background to make the SVG visible
-      svgElement.style.backgroundColor = 'white';
-      
-      // Ensure the SVG container has proper dimensions and aspect ratio
-      svgElement.style.minWidth = '200px';
-      svgElement.style.minHeight = '200px';
-      
-      // Preserve aspect ratio
-      svgElement.style.aspectRatio = 'auto';
-      svgElement.style.objectFit = 'contain';
-
       return tempDiv.innerHTML;
     } catch (err) {
       console.error('SVG rendering error:', err);
-      // Return a fallback SVG if rendering fails
-      return `<svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%; object-fit: contain; aspect-ratio: auto;">
+      // Return a minimal fallback SVG
+      return `<svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <rect width="100%" height="100%" fill="white"/>
-        <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#666" font-family="Arial, sans-serif" font-size="14">
-          SVG Preview
-        </text>
+        <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#666" font-family="Arial, sans-serif" font-size="14">SVG Preview</text>
       </svg>`;
     }
-  };
+  }, []);
+
+  // Memoize SVG rendering with better dependency management
+  const memoizedSVG = React.useMemo(() => {
+    if (!svg) return null;
+    return renderSVG(svg);
+  }, [svg, renderSVG]);
+
+  // Memoize conversion results with better performance
+  const memoizedConversionResults = React.useMemo(() => {
+    if (conversionResults.length === 0) return [];
+    
+    return conversionResults.map(result => ({
+      ...result,
+      renderedSVG: renderSVG(result.svgContent)
+    }));
+  }, [conversionResults, renderSVG]);
 
   return (
     <div className="relative overflow-hidden w-full App min-h-screen flex flex-col">
-      {/* Three.js Background */}
-      <ThreeBackground />
+      {/* Three.js Background - Lazy loaded */}
+      <React.Suspense fallback={<div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100" />}>
+        <LazyThreeBackground />
+      </React.Suspense>
       
       {/* Content Overlay */}
       <div className="relative z-10 flex-1 flex flex-col bg-transparent content-overlay">
@@ -258,11 +271,14 @@ export default function HomePage() {
               {/* Left side - Logo and Title */}
               <div className="flex items-center space-x-2 sm:space-x-3">
                 <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0 overflow-hidden">
-                  <img
+                  <Image
                     src="/paint-palette.gif"
                     alt="Image to SVG Converter logo"
                     className="w-full h-full object-contain"
-                    loading="eager"
+                    width={40}
+                    height={40}
+                    unoptimized
+                    style={{ imageRendering: 'pixelated' }}
                   />
                 </div>
                 <div>
@@ -273,7 +289,9 @@ export default function HomePage() {
               </div>
               
               {/* Right side - Visitor Count */}
-              <VisitorCounter />
+              <React.Suspense fallback={<div className="w-20 h-8 bg-gray-200 rounded animate-pulse" />}>
+                <LazyVisitorCounter />
+              </React.Suspense>
             </div>
           </div>
         </div>
@@ -368,7 +386,7 @@ export default function HomePage() {
           <div className="space-y-4">
             <div className="bg-white/80 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-white/40 p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-4">
-                <div className="w-10 h-10 bg-gray-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
@@ -391,6 +409,7 @@ export default function HomePage() {
                     setConversionResults([]);
                   }}
                   currentImages={images}
+                  isProcessing={isBulkProcessing}
                 />
               ) : (
                 <ImageUploader 
@@ -408,6 +427,7 @@ export default function HomePage() {
                     onConversionComplete={setConversionResults}
                     onQueueUpdate={() => {}}
                     conversionSettings={conversionSettings}
+                    onProcessingStateChange={setIsBulkProcessing}
                   />
                 </div>
               )}
@@ -433,13 +453,13 @@ export default function HomePage() {
                 </div>
                 
                 {image && (
-                  <div className="mt-3 sm:mt-4 space-y-3">
+                  <div className="mt-4 space-y-3">
                     {/* Action Buttons */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <button
                         onClick={handleConvert}
                         disabled={loading}
-                        className="w-full bg-gray-700 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-bold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl text-xs sm:text-sm"
+                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                       >
                         {loading ? (
                           <div className="flex items-center justify-center space-x-2">
@@ -458,7 +478,7 @@ export default function HomePage() {
                       
                       <button
                         onClick={handleClearImage}
-                        className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-bold hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl text-xs sm:text-sm"
+                        className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-xl font-bold hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                       >
                         <div className="flex items-center justify-center space-x-2">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -510,7 +530,7 @@ export default function HomePage() {
                       </div>
                       
                       <div className="space-y-3 max-h-64 overflow-y-auto">
-                        {conversionResults.map((result, index) => (
+                        {memoizedConversionResults.map((result, index) => (
                           <div key={index} className="bg-white/95 backdrop-blur-sm border border-gray-200/60 rounded-xl p-3 shadow-lg">
                             <div className="flex items-center justify-between mb-2">
                               <h4 className="text-sm font-medium text-gray-800 truncate" title={result.fileName}>
@@ -526,7 +546,7 @@ export default function HomePage() {
                               }}
                             >
                               <div 
-                                dangerouslySetInnerHTML={{ __html: renderSVG(result.svgContent) }} 
+                                dangerouslySetInnerHTML={{ __html: result.renderedSVG }} 
                                 className="w-full h-full flex items-center justify-center"
                                 style={{ 
                                   backgroundColor: 'white',
@@ -565,9 +585,9 @@ export default function HomePage() {
                             aspectRatio: 'auto'
                           }}
                         >
-                          <div 
-                            dangerouslySetInnerHTML={{ __html: renderSVG(svg) }} 
-                            className="w-full h-full flex items-center justify-center"
+                                                      <div 
+                              dangerouslySetInnerHTML={{ __html: memoizedSVG || '' }} 
+                              className="w-full h-full flex items-center justify-center"
                             style={{ 
                               backgroundColor: 'white',
                               minWidth: '150px',
@@ -781,11 +801,13 @@ export default function HomePage() {
       </div>
 
       {/* Conversion Settings Modal */}
-      <ConversionSettings
-        onSettingsChange={setConversionSettings}
-        isOpen={showSettings}
-        onToggle={() => setShowSettings(!showSettings)}
-      />
+      <React.Suspense fallback={<div className="p-4 bg-gray-100 rounded animate-pulse">Loading settings...</div>}>
+        <LazyConversionSettings
+          onSettingsChange={setConversionSettings}
+          isOpen={showSettings}
+          onToggle={() => setShowSettings(!showSettings)}
+        />
+      </React.Suspense>
 
 
 
@@ -937,6 +959,13 @@ export default function HomePage() {
           }),
         }}
       />
+      
+      {/* Performance Monitor - Development Only */}
+      {process.env.NODE_ENV === 'development' && (
+        <React.Suspense fallback={null}>
+          <PerformanceMonitor />
+        </React.Suspense>
+      )}
     </div>
   );
 }

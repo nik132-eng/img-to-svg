@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Image from 'next/image';
 import { ThreeBackground } from '@/components/ThreeBackground';
 import { UploadSection } from '@/components/UploadSection';
 import { VisitorCounter } from '@/components/VisitorCounter';
@@ -63,7 +64,7 @@ export default async function FormatLandingPage({ params }: { params: Promise<{ 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg overflow-hidden shadow">
-              <img src="/paint-palette.gif" alt="Logo" className="w-full h-full object-contain" />
+              <Image src="/paint-palette.gif" alt="Logo" className="w-full h-full object-contain" width={32} height={32} unoptimized />
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
               {isSupported ? (

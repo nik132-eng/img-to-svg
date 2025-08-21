@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Image from "next/image";
 import { useDropzone } from "react-dropzone";
 import React from "react";
 
@@ -10,6 +11,7 @@ interface BulkImageUploaderProps {
   currentImages?: File[];
   maxFiles?: number;
   maxFileSize?: number; // in bytes
+  isProcessing?: boolean; // Add this prop to know when conversion is running
 }
 
 interface FileWithPreview extends File {
@@ -25,8 +27,10 @@ export function BulkImageUploader({
   currentImages = [],
   maxFiles = 20,
   maxFileSize = 4 * 1024 * 1024, // 4MB default
+  isProcessing = false, // Add this prop
 }: BulkImageUploaderProps) {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
+  const isUpdatingFromParent = React.useRef(false);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -72,9 +76,11 @@ export function BulkImageUploader({
         if (prev.length + newFiles.length > maxFiles) {
           const remainingSlots = maxFiles - prev.length;
           const filesToAdd = newFiles.slice(0, remainingSlots);
-          return [...prev, ...filesToAdd];
+          const updatedFiles = [...prev, ...filesToAdd];
+          return updatedFiles;
         } else {
-          return [...prev, ...newFiles];
+          const updatedFiles = [...prev, ...newFiles];
+          return updatedFiles;
         }
       });
     },
@@ -97,103 +103,43 @@ export function BulkImageUploader({
       if (fileToRemove && fileToRemove.preview) {
         URL.revokeObjectURL(fileToRemove.preview);
       }
-      return prev.filter((f) => f.id !== fileId);
+      const updatedFiles = prev.filter((f) => f.id !== fileId);
+      return updatedFiles;
     });
   };
 
   const clearAllFiles = () => {
-    // Clean up all object URLs before clearing
+    // Clean up all preview URLs
     files.forEach((file) => {
       if (file.preview) {
         URL.revokeObjectURL(file.preview);
       }
     });
     setFiles([]);
-    if (onClear) onClear();
-  };
-
-  const addMoreFiles = () => {
-    // Trigger file input click
-    const input = document.createElement("input");
-    input.type = "file";
-    input.multiple = true;
-    input.accept = "image/*";
-    input.onchange = (e) => {
-      const target = e.target as HTMLInputElement;
-      if (target.files) {
-        const fileArray = Array.from(target.files);
-        onDrop(fileArray);
-      }
-    };
-    input.click();
-  };
-
-  const getFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
-  const getStatusColor = (status: FileWithPreview["status"]) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-500";
-      case "processing":
-        return "bg-blue-500";
-      case "error":
-        return "bg-red-500";
-      default:
-        return "bg-gray-400";
+    if (onClear) {
+      onClear();
     }
   };
 
-  const getStatusText = (status: FileWithPreview["status"]) => {
-    switch (status) {
-      case "completed":
-        return "Completed";
-      case "processing":
-        return "Processing";
-      case "error":
-        return "Error";
-      case "ready":
-        return "Ready";
-      default:
-        return "Ready";
+  // Notify parent component when files change (but not when updating from parent)
+  React.useEffect(() => {
+    if (!isUpdatingFromParent.current) {
+      onImagesSelect(files);
     }
-  };
-
-  // Store the callback in a ref to avoid dependency issues
-  const onImagesSelectRef = React.useRef(onImagesSelect);
-  const filesRef = React.useRef(files);
-
-  React.useEffect(() => {
-    onImagesSelectRef.current = onImagesSelect;
-  }, [onImagesSelect]);
-
-  React.useEffect(() => {
-    filesRef.current = files;
-  }, [files]);
-
-  // Update parent component when files change
-  React.useEffect(() => {
-    if (files.length > 0) {
-      onImagesSelectRef.current(files.map((f) => f as File));
-    }
-  }, [files]); // Only depend on files
+    isUpdatingFromParent.current = false;
+  }, [files, onImagesSelect]);
 
   // Update files when currentImages changes (only when it's actually different)
   React.useEffect(() => {
     if (currentImages && currentImages.length > 0) {
       // Use a more efficient comparison
-      const currentFileCount = filesRef.current.length;
+      const currentFileCount = files.length;
       const newFileCount = currentImages.length;
 
       if (
         currentFileCount !== newFileCount ||
         currentImages.some(
-          (file, index) => filesRef.current[index]?.name !== file.name
+          (file, index) => files[index]?.name !== file.name
         )
       ) {
         const newFiles: FileWithPreview[] = currentImages
@@ -225,17 +171,19 @@ export function BulkImageUploader({
           .filter(Boolean) as FileWithPreview[]; // Remove null entries
 
         if (newFiles.length > 0) {
+          isUpdatingFromParent.current = true;
           setFiles(newFiles);
         }
       }
     } else if (
       currentImages &&
       currentImages.length === 0 &&
-      filesRef.current.length > 0
+              files.length > 0
     ) {
+      isUpdatingFromParent.current = true;
       setFiles([]);
     }
-  }, [currentImages]); // Only depend on currentImages
+  }, [currentImages, files]); // Only depend on currentImages
 
   // Cleanup object URLs when files change or component unmounts
   React.useEffect(() => {
@@ -253,225 +201,150 @@ export function BulkImageUploader({
   }, [files]); // Include files to satisfy ESLint
 
   return (
-    <div className="w-full space-y-4">
-      {/* Drop Zone */}
+    <div className="space-y-4">
+      {/* Enhanced Drop Zone */}
       <div
         {...getRootProps()}
-        className={`relative border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
+        className={`relative border-2 border-dashed rounded-2xl p-6 transition-all duration-300 ${
           isDragActive
-            ? "border-blue-500 bg-blue-50/80 backdrop-blur-sm shadow-lg shadow-blue-100"
-            : isDragReject
-            ? "border-red-500 bg-red-50/80 backdrop-blur-sm"
-            : files.length >= maxFiles
-            ? "border-gray-300 bg-gray-50/80 cursor-not-allowed"
-            : "border-gray-300/60 hover:border-blue-400 hover:bg-gray-50/80 backdrop-blur-sm"
+            ? "border-blue-500 bg-blue-50/50"
+            : "border-gray-300/60 bg-gray-50/30"
+        } ${isDragReject ? "border-red-400 bg-red-50/50" : ""} ${
+          files.length >= maxFiles ? "opacity-50 cursor-not-allowed" : ""
         }`}
       >
         <input {...getInputProps()} />
-
-        {files.length === 0 ? (
-          <div className="space-y-4">
-            {/* Upload Icon */}
-            <div className="relative">
-              <div
-                className={`w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg transition-transform duration-300 ${
-                  isDragActive ? "scale-110" : ""
-                }`}
-              >
-                <svg
-                  className="w-8 h-8 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
+        
+        <div className="text-center space-y-3">
+          {files.length === 0 ? (
+            <>
+              <div className="text-4xl lg:text-5xl text-gray-300">📁</div>
+              <div>
+                <p className="text-lg font-bold text-gray-500">
+                  {isDragActive ? "Drop files here" : "Drag & drop images here"}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  or click to browse files
+                </p>
+              </div>
+              <p className="text-xs text-gray-400">
+                Supports JPG, PNG, GIF, BMP, WebP • Max {maxFiles} files • {Math.round(maxFileSize / 1024 / 1024)}MB each
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 mx-auto bg-green-100/80 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-
-              {/* Animated Background Elements */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-2 left-2 w-4 h-4 bg-blue-200 rounded-full opacity-20 animate-pulse"></div>
-                <div
-                  className="absolute top-3 right-3 w-3 h-3 bg-indigo-300 rounded-full opacity-30 animate-pulse"
-                  style={{ animationDelay: "1s" }}
-                ></div>
-                <div
-                  className="absolute bottom-2 left-3 w-2 h-2 bg-purple-200 rounded-full opacity-25 animate-pulse"
-                  style={{ animationDelay: "2s" }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3
-                className={`text-xl font-bold transition-colors duration-300 ${
-                  isDragActive
-                    ? "text-blue-600"
-                    : isDragReject
-                    ? "text-red-600"
-                    : files.length >= maxFiles
-                    ? "text-gray-500"
-                    : "text-gray-800"
-                }`}
-              >
-                {isDragActive
-                  ? "DROP YOUR IMAGES HERE!"
-                  : isDragReject
-                  ? "INVALID FILE TYPE"
-                  : files.length >= maxFiles
-                  ? "MAXIMUM FILES REACHED"
-                  : "DRAG IMAGES HERE TO BEGIN"}
-              </h3>
-
-              {!isDragReject && !files.length && files.length < maxFiles && (
-                <>
-                  <p className="text-sm text-gray-600">or you can</p>
-
-                  <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3">
-                    <button className="bg-gradient-to-r from-gray-700 to-gray-800 text-white py-3 px-6 rounded-xl font-bold hover:from-gray-800 hover:to-gray-900 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                        />
-                      </svg>
-                      <span>PICK IMAGES TO VECTORIZE</span>
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {/* File Limits Info */}
-              <div className="text-sm text-gray-500">
-                <p>
-                  Maximum {maxFiles} files • {getFileSize(maxFileSize)} per file
+              <div>
+                <p className="text-lg font-semibold text-gray-700">
+                  {files.length} file{files.length !== 1 ? "s" : ""} ready
                 </p>
-                <p>Supported: PNG, JPG, GIF, BMP, WebP</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {isDragActive ? "Drop more files here" : "Drag more files or click to add"}
+                </p>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">
-                {files.length} Image{files.length !== 1 ? "s" : ""} Selected
-              </h3>
-              <p className="text-sm text-gray-600">
-                {files.length < maxFiles
-                  ? "Drop more images or click to add more"
-                  : "Maximum files reached"}
+              <p className="text-xs text-gray-400">
+                {files.length}/{maxFiles} files • {Math.round(maxFileSize / 1024 / 1024)}MB max each
               </p>
-            </div>
+            </>
+          )}
+        </div>
 
-            {/* Add More Files Button */}
-            {files.length < maxFiles && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addMoreFiles();
-                }}
-                className="bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              >
-                + Add More Files
-              </button>
-            )}
+        {/* Add More Files Button - Shows during processing */}
+        {isProcessing && files.length < maxFiles && (
+          <div className="absolute top-3 right-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                fileInput?.click();
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-md"
+            >
+              + Add More
+            </button>
           </div>
         )}
       </div>
 
       {/* File List */}
       {files.length > 0 && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-white/40 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-semibold text-gray-800">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-700">
               Selected Files ({files.length}/{maxFiles})
-            </h4>
+            </h3>
             <button
               onClick={clearAllFiles}
-              className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
+              className="text-red-600 hover:text-red-700 text-sm font-medium hover:bg-red-50 px-2 py-1 rounded-md transition-colors"
             >
               Clear All
             </button>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
             {files.map((file) => (
               <div
                 key={file.id}
-                className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+                className="bg-white/95 backdrop-blur-sm border border-gray-200/60 rounded-xl p-3 shadow-sm hover:shadow-md transition-all"
               >
                 <div className="flex items-start space-x-3">
-                  {/* Thumbnail */}
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden">
-                      {file.preview && (
-                        <img
-                          src={file.preview}
-                          alt={file.name}
-                          className="w-full h-full object-cover"
-                        />
+                  {/* File Preview */}
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    {file.preview ? (
+                      <Image
+                        src={file.preview}
+                        alt={file.name}
+                        className="w-full h-full object-cover rounded-lg"
+                        width={48}
+                        height={48}
+                      />
+                    ) : (
+                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  
+                  {/* File Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate" title={file.name}>
+                      {file.name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        file.status === 'ready' ? 'bg-blue-100 text-blue-800' :
+                        file.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                        file.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {file.status === 'ready' && 'Ready'}
+                        {file.status === 'processing' && 'Processing'}
+                        {file.status === 'completed' && 'Completed'}
+                        {file.status === 'error' && 'Error'}
+                      </span>
+                      {file.error && (
+                        <span className="text-xs text-red-600" title={file.error}>
+                          ⚠️ {file.error}
+                        </span>
                       )}
                     </div>
                   </div>
-
-                  {/* File Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span
-                        className={`w-2 h-2 rounded-full ${getStatusColor(
-                          file.status
-                        )}`}
-                      ></span>
-                      <span className="text-xs text-gray-500">
-                        {getStatusText(file.status)}
-                      </span>
-                    </div>
-
-                    <p
-                      className="text-sm font-medium text-gray-800 truncate"
-                      title={file.name}
-                    >
-                      {file.name}
-                    </p>
-
-                    <p className="text-xs text-gray-500">
-                      {getFileSize(file.size)}
-                    </p>
-
-                    {file.error && (
-                      <p className="text-xs text-red-600 mt-1">{file.error}</p>
-                    )}
-                  </div>
-
+                  
                   {/* Remove Button */}
                   <button
                     onClick={() => removeFile(file.id)}
-                    className="flex-shrink-0 text-gray-400 hover:text-red-600 transition-colors"
+                    className="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 transition-colors flex-shrink-0"
+                    title="Remove file"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>

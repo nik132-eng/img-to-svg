@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
 
+const inter = Inter({ subsets: ['latin'] })
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://img-to-svg-converter-steel.vercel.app";
 
 export const metadata: Metadata = {
@@ -68,25 +70,16 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Free Image to SVG Converter Online (JPG, PNG) - Convert to Vector Instantly",
-    description: "Convert JPG, PNG, or GIF images to SVG vector format online for free. No software needed. Fast, easy, and privacy-friendly.",
-    type: "website",
-    locale: "en_US",
-    url: "/",
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Free Online Image to SVG Converter - Convert JPG, PNG to Vector',
-      },
-    ],
+    title: 'Image to SVG Converter - Free Online Tool',
+    description: 'Convert images to SVG vector format online for free. Fast, easy, and privacy-friendly.',
+    type: 'website',
+    locale: 'en_US',
+    siteName: 'Image to SVG Converter',
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Free Image to SVG Converter Online (JPG, PNG) - Convert to Vector Instantly",
-    description: "Convert JPG, PNG, or GIF images to SVG vector format online for free. No software needed. Fast, easy, and privacy-friendly.",
-    images: ['/og-image.png'],
+    card: 'summary_large_image',
+    title: 'Image to SVG Converter - Free Online Tool',
+    description: 'Convert images to SVG vector format online for free. Fast, easy, and privacy-friendly.',
     creator: '@nikunj_rohit10',
   },
   robots: "index, follow",
@@ -111,26 +104,37 @@ export const metadata: Metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#ffffff',
-};
+  themeColor: '#3B82F6',
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
       <head>
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link rel="icon" type="image/gif" href="/paint-palette.gif" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        {/* Resource Hints for Performance */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        
+        {/* Preload critical resources */}
+        <link rel="preload" href="/paint-palette.gif" as="image" />
+        <link rel="preload" href="/favicon.ico" as="image" />
+        
+        {/* DNS prefetch for external domains */}
+        <link rel="dns-prefetch" href="//www.google-analytics.com" />
+        <link rel="dns-prefetch" href="//www.googletagmanager.com" />
+        
+        {/* Preconnect to required origins */}
+        <link rel="preconnect" href="https://www.google-analytics.com" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
       </head>
-      <body suppressHydrationWarning className="antialiased">
+      <body className={inter.className} suppressHydrationWarning={true}>
         {children}
       </body>
     </html>
-  );
+  )
 }

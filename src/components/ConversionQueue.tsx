@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ConversionSettings as ConversionSettingsType } from "@/components/ConversionSettings";
+import React from "react"; // Added missing import
 
 interface ConversionJob {
   id: string;
@@ -22,6 +23,7 @@ interface ConversionQueueProps {
   ) => void;
   onQueueUpdate: (queue: ConversionJob[]) => void;
   conversionSettings: ConversionSettingsType;
+  onProcessingStateChange?: (isProcessing: boolean) => void; // Add this prop
 }
 
 export function ConversionQueue({
@@ -29,11 +31,23 @@ export function ConversionQueue({
   onConversionComplete,
   onQueueUpdate,
   conversionSettings,
+  onProcessingStateChange, // Add this prop
 }: ConversionQueueProps) {
   const [queue, setQueue] = useState<ConversionJob[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
+
+  // Debounced queue update to reduce unnecessary re-renders
+  const timeoutRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
+  const debouncedQueueUpdate = React.useCallback((queue: ConversionJob[]) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      onQueueUpdate(queue);
+    }, 100);
+  }, [onQueueUpdate]);
 
   // Initialize queue when files change
   useEffect(() => {
@@ -46,9 +60,21 @@ export function ConversionQueue({
         progress: 0,
       }));
       setQueue(newJobs);
-      onQueueUpdate(newJobs);
+      debouncedQueueUpdate(newJobs);
+    } else {
+      setQueue([]);
+      debouncedQueueUpdate([]);
     }
-  }, [files, onQueueUpdate]);
+  }, [files, debouncedQueueUpdate]);
+
+  // Notify parent component of processing state changes
+  useEffect(() => {
+    if (onProcessingStateChange) {
+      onProcessingStateChange(isProcessing);
+    }
+  }, [isProcessing, onProcessingStateChange]);
+
+
 
   const startProcessing = async () => {
     if (queue.length === 0 || isProcessing) return;
@@ -58,39 +84,42 @@ export function ConversionQueue({
     setErrorCount(0);
 
     const results: { fileName: string; svgContent: string }[] = [];
+    const batchSize = 3; // Process files in smaller batches to reduce blocking
 
-    // Process files sequentially to avoid overwhelming the API
-    for (let i = 0; i < queue.length; i++) {
-      const job = queue[i];
+    // Process files in batches to prevent main thread blocking
+    for (let i = 0; i < queue.length; i += batchSize) {
+      const batch = queue.slice(i, i + batchSize);
+      
+      // Process batch concurrently
+      const batchPromises = batch.map(async (job) => {
+        updateJobStatus(job.id, "processing", 0);
+        
+        try {
+          // Process file directly via API
+          const result = await convertFile(job.file, conversionSettings);
+          updateJobStatus(job.id, "completed", 100, undefined, result);
+          setCompletedCount((prev) => prev + 1);
+          return { fileName: job.fileName, svgContent: result };
+        } catch (error) {
+          // Update job status to error
+          updateJobStatus(
+            job.id,
+            "error",
+            0,
+            error instanceof Error ? error.message : "Conversion failed"
+          );
+          setErrorCount((prev) => prev + 1);
+          return null;
+        }
+      });
 
-      // Update job status to processing
-      updateJobStatus(job.id, "processing", 0);
-
-      try {
-        // Simulate processing time (remove this in production)
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Convert the file
-        const result = await convertFile(job.file, conversionSettings);
-
-        // Update job status to completed
-        updateJobStatus(job.id, "completed", 100, undefined, result);
-        setCompletedCount((prev) => prev + 1);
-
-        // Add to results array immediately
-        results.push({
-          fileName: job.fileName,
-          svgContent: result,
-        });
-      } catch (error) {
-        // Update job status to error
-        updateJobStatus(
-          job.id,
-          "error",
-          0,
-          error instanceof Error ? error.message : "Conversion failed"
-        );
-        setErrorCount((prev) => prev + 1);
+      // Wait for batch to complete before processing next batch
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults.filter(Boolean) as { fileName: string; svgContent: string }[]);
+      
+      // Small delay between batches to prevent blocking
+      if (i + batchSize < queue.length) {
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
     }
 
@@ -98,7 +127,6 @@ export function ConversionQueue({
 
     // Send results to parent component
     if (results.length > 0) {
-      console.log("Sending conversion results to parent:", results.length);
       onConversionComplete(results);
     }
   };
@@ -173,230 +201,151 @@ export function ConversionQueue({
     }
   };
 
-  const pauseProcessing = () => {
+  const stopProcessing = () => {
     setIsProcessing(false);
   };
 
-  const retryJob = async (jobId: string) => {
-    const job = queue.find((j) => j.id === jobId);
-    if (!job) return;
 
-    updateJobStatus(jobId, "ready", 0);
 
-    if (isProcessing) {
-      // If currently processing, wait for current queue to finish
-      return;
-    }
 
-    // Start processing from this job
-    const jobIndex = queue.findIndex((j) => j.id === jobId);
-    const remainingJobs = queue.slice(jobIndex);
-
-    setIsProcessing(true);
-
-    for (const remainingJob of remainingJobs) {
-      if (remainingJob.status === "ready") {
-        updateJobStatus(remainingJob.id, "processing", 0);
-
-        try {
-          const result = await convertFile(
-            remainingJob.file,
-            conversionSettings
-          );
-          updateJobStatus(remainingJob.id, "completed", 100, undefined, result);
-          setCompletedCount((prev) => prev + 1);
-        } catch (error) {
-          updateJobStatus(
-            remainingJob.id,
-            "error",
-            0,
-            error instanceof Error ? error.message : "Conversion failed"
-          );
-          setErrorCount((prev) => prev + 1);
-        }
-      }
-    }
-
-    setIsProcessing(false);
-  };
-
-  const getStatusColor = (status: ConversionJob["status"]) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-500";
-      case "processing":
-        return "bg-blue-500";
-      case "error":
-        return "bg-red-500";
-      default:
-        return "bg-gray-400";
-    }
-  };
-
-  const getStatusText = (status: ConversionJob["status"]) => {
-    switch (status) {
-      case "completed":
-        return "Completed";
-      case "processing":
-        return "Processing";
-      case "error":
-        return "Error";
-      case "ready":
-        return "Ready";
-      default:
-        return "Ready";
-    }
-  };
-
-  const getProcessingTime = (job: ConversionJob) => {
-    if (!job.startTime) return "";
-    if (job.status === "processing") {
-      const elapsed = Date.now() - job.startTime.getTime();
-      return `${Math.round(elapsed / 1000)}s`;
-    }
-    if (job.endTime && job.startTime) {
-      const elapsed = job.endTime.getTime() - job.startTime.getTime();
-      return `${Math.round(elapsed / 1000)}s`;
-    }
-    return "";
-  };
 
   if (queue.length === 0) {
     return null;
   }
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-white/40 shadow-lg">
-      {/* Queue Header */}
+    <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl p-4 shadow-lg">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-800">
             Conversion Queue
           </h3>
           <p className="text-sm text-gray-600">
-            {completedCount} completed • {errorCount} errors •{" "}
-            {queue.filter((j) => j.status === "ready").length} ready
+            {queue.length} file{queue.length !== 1 ? "s" : ""} ready to convert
           </p>
         </div>
-
-        <div className="flex space-x-2">
-          {!isProcessing ? (
-            <button
-              onClick={startProcessing}
-              disabled={queue.length === 0}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Convert to SVG
-            </button>
-          ) : (
-            <button
-              onClick={pauseProcessing}
-              className="bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
-            >
-              Pause
-            </button>
+        
+        <div className="flex items-center space-x-3">
+          {/* Processing Status */}
+          {isProcessing && (
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+              <span>Processing...</span>
+            </div>
           )}
+          
+          {/* Start/Stop Button */}
+          <button
+            onClick={isProcessing ? stopProcessing : startProcessing}
+            disabled={queue.length === 0}
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              isProcessing
+                ? "bg-red-600 hover:bg-red-700 text-white"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {isProcessing ? "Stop" : "Start Converting"}
+          </button>
         </div>
       </div>
 
-      {/* Progress Overview */}
-      <div className="mb-4">
-        <div className="flex justify-between text-sm text-gray-600 mb-1">
-          <span>Overall Progress</span>
-          <span>{Math.round((completedCount / queue.length) * 100)}%</span>
+      {/* Progress Summary */}
+      {isProcessing && (
+        <div className="mb-4 p-3 bg-blue-50/80 rounded-xl border border-blue-200/60">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-blue-800 font-medium">Overall Progress</span>
+            <span className="text-blue-600">
+              {completedCount + errorCount}/{queue.length} completed
+            </span>
+          </div>
+          <div className="mt-2 w-full bg-blue-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{
+                width: `${((completedCount + errorCount) / queue.length) * 100}%`,
+              }}
+            ></div>
+          </div>
+          <div className="mt-2 flex items-center justify-between text-xs text-blue-600">
+            <span>✅ {completedCount} successful</span>
+            <span>❌ {errorCount} failed</span>
+          </div>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-green-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(completedCount / queue.length) * 100}%` }}
-          ></div>
-        </div>
-      </div>
+      )}
 
       {/* Queue Items */}
       <div className="space-y-3 max-h-64 overflow-y-auto">
         {queue.map((job) => (
           <div
             key={job.id}
-            className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+            className={`p-3 rounded-xl border transition-all ${
+              job.status === "ready"
+                ? "bg-gray-50 border-gray-200"
+                : job.status === "processing"
+                ? "bg-blue-50 border-blue-200"
+                : job.status === "completed"
+                ? "bg-green-50 border-green-200"
+                : "bg-red-50 border-red-200"
+            }`}
           >
-            <div className="flex items-center space-x-3">
-              {/* Status Indicator */}
-              <div className="flex-shrink-0">
-                <span
-                  className={`w-3 h-3 rounded-full ${getStatusColor(
-                    job.status
-                  )}`}
-                ></span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-800 truncate" title={job.fileName}>
+                  {job.fileName}
+                </span>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  job.status === 'ready' ? 'bg-gray-100 text-gray-800' :
+                  job.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                  job.status === 'completed' ? 'bg-green-100 text-green-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {job.status === 'ready' && 'Ready'}
+                  {job.status === 'processing' && 'Processing'}
+                  {job.status === 'completed' && 'Completed'}
+                  {job.status === 'error' && 'Error'}
+                </span>
               </div>
-
-              {/* File Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <p
-                    className="text-sm font-medium text-gray-800 truncate"
-                    title={job.fileName}
-                  >
-                    {job.fileName}
-                  </p>
-                  <span className="text-xs text-gray-500">
-                    {getStatusText(job.status)}
-                  </span>
-                </div>
-
-                {/* Progress Bar */}
-                {job.status === "processing" && (
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 mb-1">
-                    <div
-                      className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: `${job.progress}%` }}
-                    ></div>
-                  </div>
-                )}
-
-                {/* Processing Time */}
-                {getProcessingTime(job) && (
-                  <p className="text-xs text-gray-500">
-                    Time: {getProcessingTime(job)}
-                  </p>
-                )}
-
-                {/* Error Message */}
-                {job.error && (
-                  <p className="text-xs text-red-600 mt-1">{job.error}</p>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex-shrink-0">
-                {job.status === "error" && (
-                  <button
-                    onClick={() => retryJob(job.id)}
-                    className="text-blue-600 hover:text-blue-800 text-xs font-medium transition-colors"
-                  >
-                    Retry
-                  </button>
-                )}
-                {job.status === "completed" && (
-                  <svg
-                    className="w-5 h-5 text-green-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                )}
-              </div>
+              
+              {job.status === "processing" && (
+                <span className="text-xs text-blue-600">{job.progress}%</span>
+              )}
             </div>
+
+            {/* Progress Bar */}
+            {job.status === "processing" && (
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${job.progress}%` }}
+                ></div>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {job.status === "error" && job.error && (
+              <p className="text-xs text-red-600 mt-1">{job.error}</p>
+            )}
+
+            {/* Processing Time */}
+            {job.startTime && job.endTime && (
+              <p className="text-xs text-gray-500 mt-1">
+                Completed in {Math.round((job.endTime.getTime() - job.startTime.getTime()) / 1000)}s
+              </p>
+            )}
           </div>
         ))}
       </div>
+
+      {/* Empty State */}
+      {queue.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p className="text-sm">No files in queue</p>
+          <p className="text-xs">Upload images to get started</p>
+        </div>
+      )}
     </div>
   );
 }
