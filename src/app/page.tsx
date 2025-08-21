@@ -15,6 +15,7 @@ const LazyThreeBackground = React.lazy(() => import('@/components/ThreeBackgroun
 // Lazy load heavy components
 const LazyConversionSettings = React.lazy(() => import('@/components/ConversionSettings').then(module => ({ default: module.ConversionSettings })));
 const LazyVisitorCounter = React.lazy(() => import('@/components/VisitorCounter').then(module => ({ default: module.VisitorCounter })));
+const LazySvgEditor = React.lazy(() => import('@/components/SvgEditor').then(module => ({ default: module.SvgEditor })));
 
 // Performance monitoring (development only)
 const PerformanceMonitor = React.lazy(() => import('@/components/PerformanceMonitor').then(module => ({ default: module.PerformanceMonitor })));
@@ -27,6 +28,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSvgEditor, setShowSvgEditor] = useState(false);
   const [useBulkMode, setUseBulkMode] = useState(false);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false); // Add this state
   const [conversionSettings, setConversionSettings] = useState<ConversionSettingsType>({
@@ -601,7 +603,7 @@ export default function HomePage() {
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button
                           onClick={handleDownload}
                           className="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2 px-4 rounded-2xl font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs"
@@ -610,6 +612,16 @@ export default function HomePage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                           <span>Download SVG</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => setShowSvgEditor(true)}
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-2xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          <span>Edit SVG</span>
                         </button>
                         
                         <button
@@ -964,6 +976,18 @@ export default function HomePage() {
       {process.env.NODE_ENV === 'development' && (
         <React.Suspense fallback={null}>
           <PerformanceMonitor />
+        </React.Suspense>
+      )}
+
+      {/* SVG Editor */}
+      {svg && (
+        <React.Suspense fallback={null}>
+          <LazySvgEditor
+            svgContent={svg}
+            onSvgChange={setSvg}
+            isOpen={showSvgEditor}
+            onToggle={() => setShowSvgEditor(!showSvgEditor)}
+          />
         </React.Suspense>
       )}
     </div>

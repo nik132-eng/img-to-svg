@@ -7,6 +7,7 @@ A powerful, modern web application that converts raster images to high-quality S
 - **🖼️ Image Upload**: Drag & drop or click to upload images (PNG, JPG, JPEG, GIF, BMP, WebP)
 - **🔧 Advanced Settings**: Customize conversion parameters for optimal results
 - **🎯 Real-time Preview**: See your SVG conversion results instantly
+- **✏️ SVG Editor**: Inline editor to modify, delete, and optimize SVG elements
 - **📥 Download**: Download optimized SVG files
 - **📋 Copy Code**: Copy SVG code to clipboard
 - **📱 Responsive Design**: Works perfectly on all devices
@@ -46,6 +47,25 @@ A powerful, modern web application that converts raster images to high-quality S
    - **Splice Threshold**: 10-90° (angle for path splitting)
    - **Corner Threshold**: 30-90° (corner detection sensitivity)
 
+5. **SVG Editor Features**
+
+   **Professional Code Editor Interface:**
+   - **Left Panel**: Dark-themed code editor with syntax highlighting
+   - **Right Panel**: Real-time SVG preview with live updates
+   - **Toolbar**: Optimize, Prettify, and Clear buttons for quick actions
+   - **Path Precision Control**: Adjustable slider (0-3) for optimization level
+   - **Error Handling**: Real-time validation with clear error messages
+   - **File Size Tracking**: Monitor SVG size changes during editing
+   - **Code Formatting**: Auto-indent and structure SVG code
+   - **Optimization Tools**: SVGO integration with configurable plugins
+
+   **Dual-Pane Interface**: Professional code editor with real-time preview
+   - **Code Editor**: Edit SVG code directly with syntax highlighting
+   - **Live Preview**: See changes instantly as you type
+   - **SVG Optimization**: Professional SVGO integration with configurable precision
+   - **Code Formatting**: Auto-prettify SVG code for better readability
+   - **Real-time Validation**: Instant feedback on SVG syntax errors
+
 ## 🛠️ Technology Stack
 
 - **Frontend**: Next.js 15 with App Router
@@ -72,7 +92,8 @@ image-to-svg-converter/
 │       ├── ImageUploader.tsx  # Drag & drop image upload
 │       ├── ThreeBackground.tsx # 3D animated background
 │       ├── VisitorCounter.tsx # Visitor tracking
-│       └── ConversionSettings.tsx # Advanced settings modal
+│       ├── ConversionSettings.tsx # Advanced settings modal
+│       └── SvgEditor.tsx      # Inline SVG editor
 ├── public/                    # Static assets
 ├── next.config.js            # Next.js configuration
 ├── tailwind.config.ts        # Tailwind CSS configuration
@@ -109,6 +130,15 @@ image-to-svg-converter/
 4. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
+## 🎯 **New SVG Editor Workflow**
+
+1. **Convert Image**: Upload and convert your image to SVG
+2. **Click Edit**: Use the "Edit SVG" button to open the professional editor
+3. **Code Editing**: Modify SVG code directly in the left panel
+4. **Live Preview**: See changes instantly in the right panel
+5. **Optimize**: Use the precision slider and optimization tools
+6. **Apply Changes**: Save your modifications back to the main interface
+
 ### Available Scripts
 
 - `npm run dev` - Start development server
@@ -133,7 +163,8 @@ No environment variables required for basic functionality.
 - **Build Time**: ~5-10 seconds
 - **Bundle Size**: ~350KB (gzipped)
 - **Image Processing**: 1-3 seconds for typical images
-- **SVG Optimization**: Reduces file size by 20-60%
+   - **SVG Optimization**: Reduces file size by 20-60%
+   - **SVG Editor**: Professional dual-pane interface for code editing
 
 ## 🌐 Browser Support
 
