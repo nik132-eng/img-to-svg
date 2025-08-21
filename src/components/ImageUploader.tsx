@@ -55,6 +55,22 @@ export function ImageUploader({
     }
   };
 
+  // Sync preview with currentImage prop
+  React.useEffect(() => {
+    if (currentImage) {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+      const newPreview = URL.createObjectURL(currentImage);
+      setPreview(newPreview);
+    } else {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+        setPreview(null);
+      }
+    }
+  }, [currentImage]);
+
   // Cleanup preview URL when component unmounts
   React.useEffect(() => {
     return () => {

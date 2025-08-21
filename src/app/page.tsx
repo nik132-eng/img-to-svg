@@ -160,8 +160,10 @@ export default function HomePage() {
 
   const handleClearImage = () => {
     setImage(null);
+    setImages([]);
     setSvg(null);
     setError(null);
+    setConversionResults([]);
   };
 
   // Handle paste events for keyboard shortcuts
