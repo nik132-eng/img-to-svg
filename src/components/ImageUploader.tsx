@@ -69,7 +69,7 @@ export function ImageUploader({
         setPreview(null);
       }
     }
-  }, [currentImage]);
+  }, [currentImage, preview]);
 
   // Cleanup preview URL when component unmounts
   React.useEffect(() => {

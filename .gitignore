@@ -43,7 +43,7 @@ next-env.d.ts
 # development documentation (keep implementation summary)
 /docs/ProgressTracker.tsx
 /docs/*.md
-/docs/sprint.json
+/docs/*.json
 
 # development components (not for production)
 src/components/ProgressTracker.tsx

@@ -17,8 +17,7 @@ const LazyConversionSettings = React.lazy(() => import('@/components/ConversionS
 const LazyVisitorCounter = React.lazy(() => import('@/components/VisitorCounter').then(module => ({ default: module.VisitorCounter })));
 const LazySvgEditor = React.lazy(() => import('@/components/SvgEditor').then(module => ({ default: module.SvgEditor })));
 
-// Performance monitoring (development only)
-const PerformanceMonitor = React.lazy(() => import('@/components/PerformanceMonitor').then(module => ({ default: module.PerformanceMonitor })));
+
 
 export default function HomePage() {
   const [image, setImage] = useState<File | null>(null);
