@@ -81,7 +81,7 @@ export function ImageUploader({
   }, [preview]);
 
   return (
-    <div className="space-y-4">
+    <>
       {/* Enhanced Drop Zone - Matching BulkImageUploader Design */}
       <div
         {...getRootProps()}
@@ -134,7 +134,7 @@ export function ImageUploader({
 
       {/* Image Preview */}
       {preview && (
-        <div className="space-y-3">
+        <div className="mt-4 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-700">
               Selected Image
@@ -181,6 +181,6 @@ export function ImageUploader({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

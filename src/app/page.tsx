@@ -385,9 +385,9 @@ export default function HomePage() {
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 mb-4 main-grid">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 mb-4 main-grid items-stretch">
           {/* Left Panel - Image Upload */}
-          <div className="space-y-4">
+          <div className="h-full flex flex-col">
             <div className="bg-white/80 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-white/40 p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-4">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -421,7 +421,7 @@ export default function HomePage() {
                   onClear={handleClearImage}
                   currentImage={image}
                 />
-                            )}
+              )}
               
               {/* Bulk Conversion Queue */}
               {useBulkMode && images.length > 0 && (
@@ -498,7 +498,7 @@ export default function HomePage() {
             </div>
 
             {/* Right Panel - SVG Preview */}
-            <div className="space-y-4">
+            <div className="h-full flex flex-col">
               <div className="bg-white/80 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-white/40 p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -975,11 +975,11 @@ export default function HomePage() {
       />
       
       {/* Performance Monitor - Development Only */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <React.Suspense fallback={null}>
           <PerformanceMonitor />
         </React.Suspense>
-      )}
+      )} */}
 
       {/* SVG Editor */}
       {svg && (
