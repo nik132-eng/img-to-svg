@@ -16,25 +16,16 @@ export function ImageUploader({
   onClear,
   currentImage,
 }: ImageUploaderProps) {
-  const [preview, setPreview] = useState<string | null>(
-    currentImage ? URL.createObjectURL(currentImage) : null
-  );
+  const [preview, setPreview] = useState<string | null>(null);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
         const file = acceptedFiles[0];
         onImageSelect(file);
-        
-        // Create preview
-        if (preview) {
-          URL.revokeObjectURL(preview);
-        }
-        const newPreview = URL.createObjectURL(file);
-        setPreview(newPreview);
       }
     },
-    [onImageSelect, preview]
+    [onImageSelect]
   );
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } =
@@ -55,21 +46,20 @@ export function ImageUploader({
     }
   };
 
-  // Sync preview with currentImage prop
+  // Sync preview with currentImage prop - simplified to prevent infinite loops
   React.useEffect(() => {
+    // Clean up previous preview
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
+
     if (currentImage) {
-      if (preview) {
-        URL.revokeObjectURL(preview);
-      }
       const newPreview = URL.createObjectURL(currentImage);
       setPreview(newPreview);
     } else {
-      if (preview) {
-        URL.revokeObjectURL(preview);
-        setPreview(null);
-      }
+      setPreview(null);
     }
-  }, [currentImage, preview]);
+  }, [currentImage]); // Only depend on currentImage
 
   // Cleanup preview URL when component unmounts
   React.useEffect(() => {
@@ -78,7 +68,7 @@ export function ImageUploader({
         URL.revokeObjectURL(preview);
       }
     };
-  }, [preview]);
+  }, []); // Empty dependency array - only run on unmount
 
   return (
     <>
@@ -157,25 +147,21 @@ export function ImageUploader({
                   className="w-full h-full object-cover rounded-lg"
                   width={48}
                   height={48}
+                  style={{ objectFit: 'cover' }}
                 />
               </div>
               
-              {/* Image Info */}
+              {/* File Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate" title={currentImage?.name}>
-                  {currentImage?.name || 'Image'}
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {currentImage?.name || "Image"}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {(currentImage?.size || 0) / 1024 / 1024 > 1 
-                    ? `${((currentImage?.size || 0) / 1024 / 1024).toFixed(2)} MB`
-                    : `${Math.round((currentImage?.size || 0) / 1024)} KB`
-                  }
+                  {currentImage?.size ? `${(currentImage.size / 1024 / 1024).toFixed(2)} MB` : 'Unknown size'}
                 </p>
-                <div className="flex items-center space-x-2 mt-1">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Ready
-                  </span>
-                </div>
+                <p className="text-xs text-gray-400">
+                  {currentImage?.type || "image/*"}
+                </p>
               </div>
             </div>
           </div>

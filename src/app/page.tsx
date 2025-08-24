@@ -6,16 +6,17 @@ import { ImageUploader } from '@/components/ImageUploader';
 import { BulkImageUploader } from '@/components/BulkImageUploader';
 import { ConversionQueue } from '@/components/ConversionQueue';
 import { ZipDownloader } from '@/components/ZipDownloader';
+import { ShareButton } from '@/components/ShareButton';
 import { ConversionSettings as ConversionSettingsType } from '@/components/ConversionSettings';
 import React from 'react'; // Added for React.useMemo
 
 // Lazy load the ThreeBackground component to reduce initial bundle size
-const LazyThreeBackground = React.lazy(() => import('@/components/ThreeBackground').then(module => ({ default: module.ThreeBackground })));
+const LazyThreeBackground = React.lazy(() => import('@/components/ThreeBackground'));
 
 // Lazy load heavy components
-const LazyConversionSettings = React.lazy(() => import('@/components/ConversionSettings').then(module => ({ default: module.ConversionSettings })));
-const LazyVisitorCounter = React.lazy(() => import('@/components/VisitorCounter').then(module => ({ default: module.VisitorCounter })));
-const LazySvgEditor = React.lazy(() => import('@/components/SvgEditor').then(module => ({ default: module.SvgEditor })));
+const LazyConversionSettings = React.lazy(() => import('@/components/ConversionSettings'));
+const LazyVisitorCounter = React.lazy(() => import('@/components/VisitorCounter'));
+const LazySvgEditor = React.lazy(() => import('@/components/SvgEditor'));
 
 
 
@@ -187,6 +188,40 @@ export default function HomePage() {
 
     document.addEventListener('paste', handlePaste);
     return () => document.removeEventListener('paste', handlePaste);
+  }, []);
+
+  // Function to create a combined SVG from multiple conversion results
+  const createCombinedSVG = React.useCallback((results: { fileName: string; svgContent: string }[]): string => {
+    if (results.length === 0) return '';
+    if (results.length === 1) return results[0].svgContent;
+    
+    // Create a combined SVG with proper spacing
+    const svgElements = results.map((result, index) => {
+      // Extract the SVG content without the outer <svg> tags
+      const svgMatch = result.svgContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
+      if (svgMatch) {
+        return `<g id="file-${index + 1}" data-filename="${result.fileName}">${svgMatch[1]}</g>`;
+      }
+      return result.svgContent;
+    });
+    
+    // Create a new SVG container with proper dimensions
+    const combinedSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 ${results.length * 200}" width="800" height="${results.length * 200}">
+  <defs>
+    <style>
+      .file-group { margin: 10px; }
+      .file-label { font-family: Arial, sans-serif; font-size: 12px; fill: #666; }
+    </style>
+  </defs>
+  ${svgElements.map((element, index) => `
+    <g transform="translate(0, ${index * 200})" class="file-group">
+      <text x="10" y="20" class="file-label">${results[index].fileName.replace(/\.[^/.]+$/, '.svg')}</text>
+      ${element}
+    </g>
+  `).join('')}
+</svg>`;
+    
+    return combinedSVG;
   }, []);
 
   const renderSVG = React.useCallback((svgContent: string): string => {
@@ -558,7 +593,9 @@ export default function HomePage() {
                                   border: '1px solid #e5e7eb',
                                   borderRadius: '6px',
                                   objectFit: 'contain',
-                                  aspectRatio: 'auto'
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
                                 }}
                               />
                             </div>
@@ -576,6 +613,15 @@ export default function HomePage() {
                           conversionResults={conversionResults}
                           isVisible={true}
                         />
+                        
+                        {/* Share Button for bulk results */}
+                        <div className="mt-4">
+                          <ShareButton 
+                            svgContent={createCombinedSVG(conversionResults)}
+                            fileName={`bulk-conversion-${conversionResults.length}-files.svg`}
+                            className="w-full"
+                          />
+                        </div>
                       </div>
                     </div>
                   ) : svg ? (
@@ -588,9 +634,9 @@ export default function HomePage() {
                             aspectRatio: 'auto'
                           }}
                         >
-                                                      <div 
-                              dangerouslySetInnerHTML={{ __html: memoizedSVG || '' }} 
-                              className="w-full h-full flex items-center justify-center"
+                          <div 
+                            dangerouslySetInnerHTML={{ __html: memoizedSVG || '' }} 
+                            className="w-full h-full flex items-center justify-center"
                             style={{ 
                               backgroundColor: 'white',
                               minWidth: '150px',
@@ -598,13 +644,15 @@ export default function HomePage() {
                               border: '1px solid #e5e7eb',
                               borderRadius: '8px',
                               objectFit: 'contain',
-                              aspectRatio: 'auto'
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
                             }}
                           />
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                         <button
                           onClick={handleDownload}
                           className="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2 px-4 rounded-2xl font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs"
@@ -624,7 +672,9 @@ export default function HomePage() {
                           </svg>
                           <span>Edit SVG</span>
                         </button>
-                        
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
                           onClick={handleCopyCode}
                           className={`py-2 px-4 rounded-2xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs ${
@@ -649,6 +699,12 @@ export default function HomePage() {
                             </>
                           )}
                         </button>
+                        
+                        <ShareButton 
+                          svgContent={svg} 
+                          fileName={image?.name || 'converted.svg'}
+                          className="text-xs"
+                        />
                       </div>
                     </div>
                   ) : (
