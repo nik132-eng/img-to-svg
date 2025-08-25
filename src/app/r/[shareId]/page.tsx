@@ -12,6 +12,13 @@ interface SharedSvgData {
   expiresAt: string;
 }
 
+interface ParsedSvgItem {
+  id: string;
+  fileName: string;
+  svgContent: string;
+  originalIndex: number;
+}
+
 export default function SharedSvgPage() {
   const params = useParams();
   const shareId = params.shareId as string;
@@ -20,6 +27,62 @@ export default function SharedSvgPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [parsedSvgs, setParsedSvgs] = useState<ParsedSvgItem[]>([]);
+  const [isBulkSvg, setIsBulkSvg] = useState(false);
+  const [selectedSvgIndex, setSelectedSvgIndex] = useState(0);
+
+  // Function to parse bulk SVG content into individual SVGs
+  const parseBulkSvgContent = (svgContent: string, fileName: string): ParsedSvgItem[] => {
+    try {
+      // Check if this is a bulk SVG by looking for multiple file groups
+      const fileGroups = svgContent.match(/<g[^>]*data-filename="([^"]*)"[^>]*>([\s\S]*?)<\/g>/g);
+      
+      if (fileGroups && fileGroups.length > 1) {
+        // This is a bulk SVG, parse individual items
+        const parsed: ParsedSvgItem[] = [];
+        
+        fileGroups.forEach((group, index) => {
+          const filenameMatch = group.match(/data-filename="([^"]*)"/);
+          const filename = filenameMatch ? filenameMatch[1] : `File ${index + 1}`;
+          
+          // Extract the SVG content from the group
+          const contentMatch = group.match(/<g[^>]*>([\s\S]*?)<\/g>/);
+          if (contentMatch) {
+            // Wrap the content in proper SVG tags
+            const individualSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+              ${contentMatch[1]}
+            </svg>`;
+            
+            parsed.push({
+              id: `svg-${index}`,
+              fileName: filename,
+              svgContent: individualSvg,
+              originalIndex: index
+            });
+          }
+        });
+        
+        return parsed;
+      } else {
+        // Single SVG, return as is
+        return [{
+          id: 'svg-0',
+          fileName: fileName,
+          svgContent: svgContent,
+          originalIndex: 0
+        }];
+      }
+    } catch (error) {
+      console.error('Error parsing bulk SVG:', error);
+      // Fallback to single SVG
+      return [{
+        id: 'svg-0',
+        fileName: fileName,
+        svgContent: svgContent,
+        originalIndex: 0
+      }];
+    }
+  };
 
   useEffect(() => {
     const fetchSharedSvg = async () => {
@@ -41,6 +104,12 @@ export default function SharedSvgPage() {
         const data = await response.json();
         console.log(`✅ Successfully loaded share ID: ${shareId}`);
         setSvgData(data);
+        
+        // Parse the SVG content to check if it's bulk
+        const parsed = parseBulkSvgContent(data.svgContent, data.fileName);
+        setParsedSvgs(parsed);
+        setIsBulkSvg(parsed.length > 1);
+        setSelectedSvgIndex(0);
       } catch (error) {
         console.error('❌ Error fetching shared SVG:', error);
         setError('Failed to load shared SVG. Please check your internet connection and try again.');
@@ -55,6 +124,21 @@ export default function SharedSvgPage() {
   }, [shareId]);
 
   const handleDownload = () => {
+    if (!svgData || parsedSvgs.length === 0) return;
+    
+    const selectedSvg = parsedSvgs[selectedSvgIndex];
+    const blob = new Blob([selectedSvg.svgContent], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = selectedSvg.fileName.replace(/\.[^/.]+$/, '.svg') || 'shared.svg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadAll = () => {
     if (!svgData) return;
     
     const blob = new Blob([svgData.svgContent], { type: 'image/svg+xml' });
@@ -69,10 +153,11 @@ export default function SharedSvgPage() {
   };
 
   const handleCopyCode = async () => {
-    if (!svgData) return;
+    if (!svgData || parsedSvgs.length === 0) return;
     
     try {
-      await navigator.clipboard.writeText(svgData.svgContent);
+      const selectedSvg = parsedSvgs[selectedSvgIndex];
+      await navigator.clipboard.writeText(selectedSvg.svgContent);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (error) {
@@ -178,12 +263,42 @@ export default function SharedSvgPage() {
             <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl border border-white/40 p-6">
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-gray-800 mb-1">SVG Preview</h2>
-                <p className="text-sm text-gray-600">File: {svgData.fileName.replace(/\.[^/.]+$/, '.svg')}</p>
+                <p className="text-sm text-gray-600">
+                  {isBulkSvg 
+                    ? `Bulk Conversion: ${parsedSvgs.length} files` 
+                    : `File: ${svgData.fileName.replace(/\.[^/.]+$/, '.svg')}`
+                  }
+                </p>
               </div>
+              
+              {/* SVG Navigation for Bulk Content */}
+              {isBulkSvg && parsedSvgs.length > 1 && (
+                <div className="mb-4 bg-gray-50 rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-700">Select SVG to view:</span>
+                    <span className="text-xs text-gray-500">{selectedSvgIndex + 1} of {parsedSvgs.length}</span>
+                  </div>
+                  <div className="flex space-x-2 overflow-x-auto pb-2">
+                    {parsedSvgs.map((svg, index) => (
+                      <button
+                        key={svg.id}
+                        onClick={() => setSelectedSvgIndex(index)}
+                        className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          selectedSvgIndex === index
+                            ? 'bg-blue-600 text-white shadow-md'
+                            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                        }`}
+                      >
+                        {svg.fileName.replace(/\.[^/.]+$/, '')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               <div className="bg-white rounded-2xl border border-gray-200 p-4 min-h-96 flex items-center justify-center overflow-hidden">
                 <div 
-                  dangerouslySetInnerHTML={{ __html: svgData.svgContent }}
+                  dangerouslySetInnerHTML={{ __html: parsedSvgs[selectedSvgIndex]?.svgContent || svgData.svgContent }}
                   className="w-full h-full flex items-center justify-center"
                   style={{ 
                     backgroundColor: 'white',
@@ -208,9 +323,22 @@ export default function SharedSvgPage() {
               <h3 className="text-lg font-semibold text-gray-800 mb-4">File Information</h3>
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-gray-600">Original Name</p>
-                  <p className="text-sm font-medium text-gray-800">{svgData.fileName}</p>
+                  <p className="text-sm text-gray-600">
+                    {isBulkSvg ? 'Current SVG Name' : 'Original Name'}
+                  </p>
+                  <p className="text-sm font-medium text-gray-800">
+                    {isBulkSvg 
+                      ? parsedSvgs[selectedSvgIndex]?.fileName || 'Unknown'
+                      : svgData.fileName
+                    }
+                  </p>
                 </div>
+                {isBulkSvg && (
+                  <div>
+                    <p className="text-sm text-gray-600">Total Files</p>
+                    <p className="text-sm font-medium text-gray-800">{parsedSvgs.length} SVGs</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm text-gray-600">Share ID</p>
                   <p className="text-sm font-mono text-gray-800 bg-gray-100 px-2 py-1 rounded">{svgData.shareId}</p>
@@ -237,8 +365,20 @@ export default function SharedSvgPage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span>Download SVG</span>
+                  <span>Download Current SVG</span>
                 </button>
+                
+                {isBulkSvg && parsedSvgs.length > 1 && (
+                  <button
+                    onClick={handleDownloadAll}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Download All ({parsedSvgs.length})</span>
+                  </button>
+                )}
                 
                 <button
                   onClick={handleCopyCode}
