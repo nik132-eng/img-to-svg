@@ -23,6 +23,13 @@ const nextConfig = {
   
   // Webpack optimizations
   webpack: (config, { dev, isServer }) => {
+    // Development-specific optimizations
+    if (dev) {
+      // Disable aggressive optimizations in development
+      config.optimization.minimize = false;
+      config.optimization.splitChunks = false;
+    }
+    
     if (!isServer) {
       // Client-side fallbacks for native modules
       config.resolve.fallback = {
@@ -40,7 +47,7 @@ const nextConfig = {
     });
     
     if (!dev && !isServer) {
-      // Production optimizations
+      // Production optimizations - minimal chunk splitting to avoid ChunkLoadError
       config.optimization.splitChunks = {
         chunks: 'all',
         cacheGroups: {
@@ -48,18 +55,14 @@ const nextConfig = {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             chunks: 'all',
-          },
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'all',
-            enforce: true,
+            priority: 10,
           },
         },
+        maxSize: 500000, // Larger chunks to reduce splitting
       };
       
-      // Tree shaking
-      config.optimization.usedExports = true;
+      // Minimal tree shaking
+      config.optimization.usedExports = false;
       config.optimization.sideEffects = false;
     }
     

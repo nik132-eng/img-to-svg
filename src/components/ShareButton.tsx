@@ -13,11 +13,9 @@ export function ShareButton({ svgContent, fileName = 'converted.svg', className 
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [shareError, setShareError] = useState<string | null>(null);
 
   const handleShare = async () => {
     setIsSharing(true);
-    setShareError(null);
     
     try {
       // Create a shareable link
@@ -59,7 +57,6 @@ export function ShareButton({ svgContent, fileName = 'converted.svg', className 
       if (retryCount < 2) {
         // Retry up to 2 times
         setRetryCount(prev => prev + 1);
-        setShareError(`Share failed. Retrying... (${retryCount + 1}/3)`);
         
         // Wait 1 second before retrying
         setTimeout(() => {
@@ -69,7 +66,6 @@ export function ShareButton({ svgContent, fileName = 'converted.svg', className 
       }
       
       // After retries, use fallback
-      setShareError('Share service unavailable. Using fallback method.');
       const fallbackUrl = `${window.location.origin}/share?svg=${encodeURIComponent(svgContent)}`;
       setShareUrl(fallbackUrl);
     } finally {
@@ -147,18 +143,11 @@ export function ShareButton({ svgContent, fileName = 'converted.svg', className 
   }
 
   return (
-    <div className="space-y-2">
-      {shareError && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 text-xs text-yellow-800">
-          {shareError}
-        </div>
-      )}
-      
-      <button
-        onClick={handleShare}
-        disabled={isSharing}
-        className={`bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-2xl font-medium hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs ${className}`}
-      >
+    <button
+      onClick={handleShare}
+      disabled={isSharing}
+      className={`bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-2xl font-medium hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-xs w-full h-full ${className}`}
+    >
         {isSharing ? (
           <>
             <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
@@ -173,6 +162,5 @@ export function ShareButton({ svgContent, fileName = 'converted.svg', className 
           </>
         )}
       </button>
-    </div>
   );
 }

@@ -8,15 +8,62 @@ import { ConversionQueue } from '@/components/ConversionQueue';
 import { ZipDownloader } from '@/components/ZipDownloader';
 import { ShareButton } from '@/components/ShareButton';
 import { ConversionSettings as ConversionSettingsType } from '@/components/ConversionSettings';
+import { ClientOnly } from '@/components/ClientOnly';
 import React from 'react'; // Added for React.useMemo
 
-// Lazy load the ThreeBackground component to reduce initial bundle size
-const LazyThreeBackground = React.lazy(() => import('@/components/ThreeBackground'));
+// Lazy load components with proper error handling
+const LazyThreeBackground = React.lazy(() => 
+  import('@/components/ThreeBackground')
+    .then(module => ({ default: module.ThreeBackground }))
+    .catch(() => ({ default: () => <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100" /> }))
+);
 
-// Lazy load heavy components
-const LazyConversionSettings = React.lazy(() => import('@/components/ConversionSettings'));
-const LazyVisitorCounter = React.lazy(() => import('@/components/VisitorCounter'));
-const LazySvgEditor = React.lazy(() => import('@/components/SvgEditor'));
+const LazyConversionSettings = React.lazy(() => 
+  import('@/components/ConversionSettings')
+    .then(module => ({ default: module.ConversionSettings }))
+    .catch(() => ({ default: () => <div className="p-4 bg-gray-100 rounded">Settings failed to load</div> }))
+);
+
+const LazyVisitorCounter = React.lazy(() => 
+  import('@/components/VisitorCounter')
+    .then(module => ({ default: module.VisitorCounter }))
+    .catch(() => ({ default: () => <div className="w-20 h-8 bg-gray-200 rounded" /> }))
+);
+
+const LazySvgEditor = React.lazy(() => 
+  import('@/components/SvgEditor')
+    .then(module => ({ default: module.SvgEditor }))
+    .catch(() => ({ default: () => <div className="p-4 bg-gray-100 rounded">Editor failed to load</div> }))
+);
+
+// Error boundary for chunk loading errors
+class ChunkErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallback: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    if (error.message.includes('ChunkLoadError') || error.message.includes('Loading chunk')) {
+      return { hasError: true };
+    }
+    return { hasError: false };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Chunk loading error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
 
 
 
@@ -294,11 +341,15 @@ export default function HomePage() {
   }, [conversionResults, renderSVG]);
 
   return (
-    <div className="relative overflow-hidden w-full App min-h-screen flex flex-col">
+    <div className="relative overflow-hidden w-full App min-h-screen flex flex-col" suppressHydrationWarning>
       {/* Three.js Background - Lazy loaded */}
-      <React.Suspense fallback={<div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100" />}>
-        <LazyThreeBackground />
-      </React.Suspense>
+      <ClientOnly fallback={<div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100" />}>
+        <ChunkErrorBoundary fallback={<div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100" />}>
+          <React.Suspense fallback={<div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100" />}>
+            <LazyThreeBackground />
+          </React.Suspense>
+        </ChunkErrorBoundary>
+      </ClientOnly>
       
       {/* Content Overlay */}
       <div className="relative z-10 flex-1 flex flex-col bg-transparent content-overlay">
@@ -327,9 +378,13 @@ export default function HomePage() {
               </div>
               
               {/* Right side - Visitor Count */}
-              <React.Suspense fallback={<div className="w-20 h-8 bg-gray-200 rounded animate-pulse" />}>
-                <LazyVisitorCounter />
-              </React.Suspense>
+              <ClientOnly fallback={<div className="w-20 h-8 bg-gray-200 rounded animate-pulse" />}>
+                <ChunkErrorBoundary fallback={<div className="w-20 h-8 bg-gray-200 rounded animate-pulse" />}>
+                  <React.Suspense fallback={<div className="w-20 h-8 bg-gray-200 rounded animate-pulse" />}>
+                    <LazyVisitorCounter />
+                  </React.Suspense>
+                </ChunkErrorBoundary>
+              </ClientOnly>
             </div>
           </div>
         </div>
@@ -619,7 +674,6 @@ export default function HomePage() {
                           <ShareButton 
                             svgContent={createCombinedSVG(conversionResults)}
                             fileName={`bulk-conversion-${conversionResults.length}-files.svg`}
-                            className="w-full"
                           />
                         </div>
                       </div>
@@ -703,7 +757,6 @@ export default function HomePage() {
                         <ShareButton 
                           svgContent={svg} 
                           fileName={image?.name || 'converted.svg'}
-                          className="text-xs"
                         />
                       </div>
                     </div>
@@ -870,13 +923,15 @@ export default function HomePage() {
       </div>
 
       {/* Conversion Settings Modal */}
-      <React.Suspense fallback={<div className="p-4 bg-gray-100 rounded animate-pulse">Loading settings...</div>}>
-        <LazyConversionSettings
-          onSettingsChange={setConversionSettings}
-          isOpen={showSettings}
-          onToggle={() => setShowSettings(!showSettings)}
-        />
-      </React.Suspense>
+      <ChunkErrorBoundary fallback={<div className="p-4 bg-gray-100 rounded animate-pulse">Settings failed to load</div>}>
+        <React.Suspense fallback={<div className="p-4 bg-gray-100 rounded animate-pulse">Loading settings...</div>}>
+          <LazyConversionSettings
+            onSettingsChange={setConversionSettings}
+            isOpen={showSettings}
+            onToggle={() => setShowSettings(!showSettings)}
+          />
+        </React.Suspense>
+      </ChunkErrorBoundary>
 
 
 
@@ -1038,14 +1093,16 @@ export default function HomePage() {
 
       {/* SVG Editor */}
       {svg && (
-        <React.Suspense fallback={null}>
-          <LazySvgEditor
-            svgContent={svg}
-            onSvgChange={setSvg}
-            isOpen={showSvgEditor}
-            onToggle={() => setShowSvgEditor(!showSvgEditor)}
-          />
-        </React.Suspense>
+        <ChunkErrorBoundary fallback={<div>Editor failed to load</div>}>
+          <React.Suspense fallback={null}>
+            <LazySvgEditor
+              svgContent={svg}
+              onSvgChange={setSvg}
+              isOpen={showSvgEditor}
+              onToggle={() => setShowSvgEditor(!showSvgEditor)}
+            />
+          </React.Suspense>
+        </ChunkErrorBoundary>
       )}
     </div>
   );

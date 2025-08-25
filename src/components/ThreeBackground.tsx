@@ -1,12 +1,17 @@
 'use client';
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame, Canvas } from '@react-three/fiber';
 import { Float, Sphere, Box, Torus } from '@react-three/drei';
 import * as THREE from 'three';
 
 function FloatingShapes() {
   const groupRef = useRef<THREE.Group>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const shapes = useMemo(() => {
     const temp = [];
@@ -14,25 +19,48 @@ function FloatingShapes() {
     // Mobile optimization will be handled by CSS media queries
     const shapeCount = 12;
     
-    for (let i = 0; i < shapeCount; i++) {
-      temp.push({
-        position: [
-          (Math.random() - 0.5) * 20,
-          (Math.random() - 0.5) * 20,
-          (Math.random() - 0.5) * 10
-        ],
-        rotation: [
-          Math.random() * Math.PI,
-          Math.random() * Math.PI,
-          Math.random() * Math.PI
-        ],
-        scale: Math.random() * 0.6 + 0.3,
-        type: Math.floor(Math.random() * 3),
-        speed: Math.random() * 0.5 + 0.5
-      });
+    // Use deterministic values during SSR, random values on client
+    if (!isClient) {
+      // SSR: Use deterministic values based on index
+      for (let i = 0; i < shapeCount; i++) {
+        temp.push({
+          position: [
+            ((i * 0.3) % 1 - 0.5) * 20,
+            ((i * 0.7) % 1 - 0.5) * 20,
+            ((i * 0.5) % 1 - 0.5) * 10
+          ],
+          rotation: [
+            (i * 0.1) % Math.PI,
+            (i * 0.2) % Math.PI,
+            (i * 0.3) % Math.PI
+          ],
+          scale: ((i * 0.1) % 1) * 0.6 + 0.3,
+          type: i % 3,
+          speed: ((i * 0.1) % 1) * 0.5 + 0.5
+        });
+      }
+    } else {
+      // Client: Use random values
+      for (let i = 0; i < shapeCount; i++) {
+        temp.push({
+          position: [
+            (Math.random() - 0.5) * 20,
+            (Math.random() - 0.5) * 20,
+            (Math.random() - 0.5) * 10
+          ],
+          rotation: [
+            Math.random() * Math.PI,
+            Math.random() * Math.PI,
+            Math.random() * Math.PI
+          ],
+          scale: Math.random() * 0.6 + 0.3,
+          type: Math.floor(Math.random() * 3),
+          speed: Math.random() * 0.5 + 0.5
+        });
+      }
     }
     return temp;
-  }, []);
+  }, [isClient]);
 
   useFrame((state) => {
     if (groupRef.current) {

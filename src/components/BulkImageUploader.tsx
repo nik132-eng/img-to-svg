@@ -285,7 +285,7 @@ export function BulkImageUploader({
             </button>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style={{ maxHeight: '256px' }}>
             {files.map((file) => (
               <div
                 key={file.id}
