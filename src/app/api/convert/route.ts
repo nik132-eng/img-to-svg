@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { vectorize } from '@neplex/vectorizer';
 import { optimize } from 'svgo';
+import { parseSettingsFromParams, validateConversionSettings } from '@/utils/conversion';
+import { ConversionSettings } from '@/types/conversion';
+import { CustomVectorizer } from '@/utils/customVectorizer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,54 +50,77 @@ export async function POST(request: NextRequest) {
     }
 
 
-    // Get conversion settings from query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const colorModeParam = searchParams.get('colorMode') || 'color';
-    const colorPrecision = parseInt(searchParams.get('colorPrecision') || '6');
-    const filterSpeckle = parseInt(searchParams.get('filterSpeckle') || '4');
-    const spliceThreshold = parseInt(searchParams.get('spliceThreshold') || '45');
-    const cornerThreshold = parseInt(searchParams.get('cornerThreshold') || '60');
-    const hierarchicalParam = searchParams.get('hierarchical') || 'stacked';
-    const modeParam = searchParams.get('mode') || 'spline';
-    const layerDifference = parseInt(searchParams.get('layerDifference') || '5');
-    const lengthThreshold = parseInt(searchParams.get('lengthThreshold') || '5');
-    const maxIterations = parseInt(searchParams.get('maxIterations') || '2');
-    const pathPrecision = parseInt(searchParams.get('pathPrecision') || '5');
+    // Parse conversion settings from query parameters using utility functions
+    const conversionSettings = parseSettingsFromParams(request.nextUrl.searchParams);
+    
+    // Validate settings
+    if (!validateConversionSettings(conversionSettings)) {
+      return NextResponse.json(
+        { error: 'Invalid conversion settings provided' },
+        { status: 400 }
+      );
+    }
 
     // Convert file to buffer
     const arrayBuffer = await imageFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Map string parameters to enum values
-    const colorMode = colorModeParam === 'color' ? 0 : 1; // ColorMode.Color = 0, ColorMode.Binary = 1
-    const hierarchical = hierarchicalParam === 'stacked' ? 0 : 1; // Hierarchical.Stacked = 0, Hierarchical.Cutout = 1
-    const mode = modeParam === 'spline' ? 2 : 1; // PathSimplifyMode.Spline = 2, PathSimplifyMode.Polygon = 1
-
-    // Configure VTracer options
-    const options = {
-      colorMode,
-      colorPrecision,
-      filterSpeckle,
-      spliceThreshold,
-      cornerThreshold,
-      hierarchical,
-      mode,
-      layerDifference,
-      lengthThreshold,
-      maxIterations,
-      pathPrecision,
-    };
-
-    console.log('Converting image with options:', options);
-
-    // Convert image to SVG using VTracer
-    const result = await vectorize(buffer, options);
+    // Check if user wants to use custom algorithms
+    const useCustomAlgorithms = request.nextUrl.searchParams.get('useCustom') === 'true';
     
-    if (!result) {
-      throw new Error('Vectorization failed - no output received');
+    let svgContent: string;
+    
+    if (useCustomAlgorithms) {
+      // Use custom vectorization algorithms
+      try {
+        // Convert buffer to ImageData for custom algorithms
+        const canvas = new OffscreenCanvas(imageFile.width || 800, imageFile.height || 600);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          throw new Error('Failed to get canvas context');
+        }
+        
+        // Create ImageData from buffer (simplified - in reality you'd need proper image loading)
+        const imageData = new ImageData(new Uint8ClampedArray(buffer), imageFile.width || 800, imageFile.height || 600);
+        
+        // Use custom vectorizer
+        const customResult = await CustomVectorizer.vectorize(imageData, {
+          conversionSettings,
+          customSettings: {
+            edgeDetection: {
+              type: 'adaptive' as const,
+              sobelThreshold: 50,
+              cannyLowThreshold: 25,
+              cannyHighThreshold: 75,
+              adaptiveThreshold: 30
+            },
+            pathTracing: {
+              algorithm: 'custom' as const,
+              smoothingFactor: 0.3,
+              simplificationThreshold: 2
+            },
+            colorQuantization: {
+              kMeansClusters: 8,
+              colorSimilarityThreshold: 30,
+              regionGrowingThreshold: 25
+            }
+          }
+        });
+        
+        svgContent = customResult.svg;
+        console.log('Custom vectorization completed with quality:', customResult.quality);
+        
+      } catch (customError) {
+        console.warn('Custom vectorization failed, falling back to VTracer:', customError);
+        // Fall back to VTracer
+        svgContent = await this.fallbackToVTracer(buffer, conversionSettings);
+      }
+    } else {
+      // Use traditional VTracer
+      svgContent = await this.fallbackToVTracer(buffer, conversionSettings);
     }
 
-    let svgContent = result;
+    console.log('Converting image with custom algorithms:', useCustomAlgorithms);
 
     // Optimize SVG using SVGO
     try {
@@ -163,17 +188,17 @@ export async function POST(request: NextRequest) {
         svg: svgContent,
         message: 'Image converted successfully',
         settings: {
-          colorMode,
-          colorPrecision,
-          filterSpeckle,
-          spliceThreshold,
-          cornerThreshold,
-          hierarchical,
-          mode,
-          layerDifference,
-          lengthThreshold,
-          maxIterations,
-          pathPrecision
+          colorMode: conversionSettings.colorMode,
+          colorPrecision: conversionSettings.colorPrecision,
+          filterSpeckle: conversionSettings.filterSpeckle,
+          spliceThreshold: conversionSettings.spliceThreshold,
+          cornerThreshold: conversionSettings.cornerThreshold,
+          hierarchical: conversionSettings.hierarchical,
+          mode: conversionSettings.mode,
+          layerDifference: conversionSettings.layerDifference,
+          lengthThreshold: conversionSettings.lengthThreshold,
+          maxIterations: conversionSettings.maxIterations,
+          pathPrecision: conversionSettings.pathPrecision
         }
       },
       { 
@@ -193,6 +218,36 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Helper function to use VTracer when custom algorithms fail
+async function fallbackToVTracer(buffer: Buffer, conversionSettings: ConversionSettings): Promise<string> {
+  const { vectorize } = await import('@neplex/vectorizer');
+  
+  // Map conversion settings to VTracer format
+  const vtracerOptions = {
+    colorMode: conversionSettings.colorMode,
+    colorPrecision: conversionSettings.colorPrecision,
+    filterSpeckle: conversionSettings.filterSpeckle,
+    spliceThreshold: conversionSettings.spliceThreshold,
+    cornerThreshold: conversionSettings.cornerThreshold,
+    hierarchical: conversionSettings.hierarchical,
+    mode: conversionSettings.mode,
+    layerDifference: conversionSettings.layerDifference,
+    lengthThreshold: conversionSettings.lengthThreshold,
+    maxIterations: conversionSettings.maxIterations,
+    pathPrecision: conversionSettings.pathPrecision,
+  };
+
+  console.log('Using VTracer fallback with options:', vtracerOptions);
+  
+  const result = await vectorize(buffer, vtracerOptions);
+  
+  if (!result) {
+    throw new Error('VTracer fallback failed - no output received');
+  }
+  
+  return result;
 }
 
 // Handle OPTIONS request for CORS

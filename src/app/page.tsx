@@ -9,6 +9,7 @@ import { ZipDownloader } from '@/components/ZipDownloader';
 import { ShareButton } from '@/components/ShareButton';
 import { ConversionSettings as ConversionSettingsType } from '@/components/ConversionSettings';
 import { ClientOnly } from '@/components/ClientOnly';
+import { CustomAlgorithmTester } from '@/components/CustomAlgorithmTester';
 import React from 'react'; // Added for React.useMemo
 
 // Lazy load components with proper error handling
@@ -391,6 +392,13 @@ export default function HomePage() {
 
         {/* Main Content */}
         <div className="flex-1 w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 main-content">
+          {/* Custom Algorithm Tester - Development Only */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mb-6">
+              <CustomAlgorithmTester />
+            </div>
+          )}
+          
           {/* SEO Content Section */}
           <div className="hidden">
             <div className="text-center space-y-4">

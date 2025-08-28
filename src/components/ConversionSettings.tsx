@@ -1,35 +1,24 @@
 'use client';
 
 import { useState } from 'react';
+import { ConversionSettings as ConversionSettingsType, ColorMode, HierarchicalMode, PathSimplifyMode } from '@/types/conversion';
 
 interface ConversionSettingsProps {
-  onSettingsChange: (settings: ConversionSettings) => void;
+  onSettingsChange: (settings: ConversionSettingsType) => void;
   isOpen: boolean;
   onToggle: () => void;
 }
 
-export interface ConversionSettings {
-  colorMode: 'color' | 'binary';
-  colorPrecision: number;
-  filterSpeckle: number;
-  spliceThreshold: number;
-  cornerThreshold: number;
-  hierarchical: 'stacked' | 'cutout';
-  mode: 'spline' | 'polygon';
-  layerDifference: number;
-  lengthThreshold: number;
-  maxIterations: number;
-  pathPrecision: number;
-}
+export type ConversionSettings = ConversionSettingsType;
 
-const defaultSettings: ConversionSettings = {
-  colorMode: 'color',
+const defaultSettings: ConversionSettingsType = {
+  colorMode: ColorMode.Color,
   colorPrecision: 6,
   filterSpeckle: 4,
   spliceThreshold: 45,
   cornerThreshold: 60,
-  hierarchical: 'stacked',
-  mode: 'spline',
+  hierarchical: HierarchicalMode.Stacked,
+  mode: PathSimplifyMode.Spline,
   layerDifference: 5,
   lengthThreshold: 5,
   maxIterations: 2,
@@ -37,7 +26,7 @@ const defaultSettings: ConversionSettings = {
 };
 
 export function ConversionSettings({ onSettingsChange, isOpen, onToggle }: ConversionSettingsProps) {
-  const [settings, setSettings] = useState<ConversionSettings>(defaultSettings);
+  const [settings, setSettings] = useState<ConversionSettingsType>(defaultSettings);
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
 
   const handleSettingChange = (key: keyof ConversionSettings, value: string | number) => {
