@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { optimize } from 'svgo';
 import { parseSettingsFromParams, validateConversionSettings } from '@/utils/conversion';
-import { ConversionSettings } from '@/types/conversion';
-import { CustomVectorizer } from '@/utils/customVectorizer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,62 +63,27 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await imageFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Check if user wants to use custom algorithms
-    const useCustomAlgorithms = request.nextUrl.searchParams.get('useCustom') === 'true';
+    // Use VTracer for now (custom algorithms can be added later)
+    const { vectorize } = await import('@neplex/vectorizer');
     
-    let svgContent: string;
+    // Convert our settings to VTracer format
+    const vtracerSettings = {
+      colorMode: conversionSettings.colorMode as number,
+      colorPrecision: conversionSettings.colorPrecision,
+      filterSpeckle: conversionSettings.filterSpeckle,
+      spliceThreshold: conversionSettings.spliceThreshold,
+      cornerThreshold: conversionSettings.cornerThreshold,
+      hierarchical: conversionSettings.hierarchical as number,
+      mode: conversionSettings.mode as number,
+      layerDifference: conversionSettings.layerDifference,
+      lengthThreshold: conversionSettings.lengthThreshold,
+      maxIterations: conversionSettings.maxIterations,
+      pathPrecision: conversionSettings.pathPrecision,
+    };
     
-    if (useCustomAlgorithms) {
-      // Use custom vectorization algorithms
-      try {
-        // Convert buffer to ImageData for custom algorithms
-        const canvas = new OffscreenCanvas(imageFile.width || 800, imageFile.height || 600);
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          throw new Error('Failed to get canvas context');
-        }
-        
-        // Create ImageData from buffer (simplified - in reality you'd need proper image loading)
-        const imageData = new ImageData(new Uint8ClampedArray(buffer), imageFile.width || 800, imageFile.height || 600);
-        
-        // Use custom vectorizer
-        const customResult = await CustomVectorizer.vectorize(imageData, {
-          conversionSettings,
-          customSettings: {
-            edgeDetection: {
-              type: 'adaptive' as const,
-              sobelThreshold: 50,
-              cannyLowThreshold: 25,
-              cannyHighThreshold: 75,
-              adaptiveThreshold: 30
-            },
-            pathTracing: {
-              algorithm: 'custom' as const,
-              smoothingFactor: 0.3,
-              simplificationThreshold: 2
-            },
-            colorQuantization: {
-              kMeansClusters: 8,
-              colorSimilarityThreshold: 30,
-              regionGrowingThreshold: 25
-            }
-          }
-        });
-        
-        svgContent = customResult.svg;
-        console.log('Custom vectorization completed with quality:', customResult.quality);
-        
-      } catch (customError) {
-        console.warn('Custom vectorization failed, falling back to VTracer:', customError);
-        // Fall back to VTracer
-        svgContent = await this.fallbackToVTracer(buffer, conversionSettings);
-      }
-    } else {
-      // Use traditional VTracer
-      svgContent = await this.fallbackToVTracer(buffer, conversionSettings);
-    }
+    let svgContent = await vectorize(buffer, vtracerSettings);
 
-    console.log('Converting image with custom algorithms:', useCustomAlgorithms);
+    console.log('Converting image with VTracer');
 
     // Optimize SVG using SVGO
     try {
@@ -220,35 +183,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper function to use VTracer when custom algorithms fail
-async function fallbackToVTracer(buffer: Buffer, conversionSettings: ConversionSettings): Promise<string> {
-  const { vectorize } = await import('@neplex/vectorizer');
-  
-  // Map conversion settings to VTracer format
-  const vtracerOptions = {
-    colorMode: conversionSettings.colorMode,
-    colorPrecision: conversionSettings.colorPrecision,
-    filterSpeckle: conversionSettings.filterSpeckle,
-    spliceThreshold: conversionSettings.spliceThreshold,
-    cornerThreshold: conversionSettings.cornerThreshold,
-    hierarchical: conversionSettings.hierarchical,
-    mode: conversionSettings.mode,
-    layerDifference: conversionSettings.layerDifference,
-    lengthThreshold: conversionSettings.lengthThreshold,
-    maxIterations: conversionSettings.maxIterations,
-    pathPrecision: conversionSettings.pathPrecision,
-  };
 
-  console.log('Using VTracer fallback with options:', vtracerOptions);
-  
-  const result = await vectorize(buffer, vtracerOptions);
-  
-  if (!result) {
-    throw new Error('VTracer fallback failed - no output received');
-  }
-  
-  return result;
-}
 
 // Handle OPTIONS request for CORS
 export async function OPTIONS() {

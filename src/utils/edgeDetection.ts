@@ -73,7 +73,7 @@ export class CannyEdgeDetector {
     const highThreshold = options.highThreshold || 75;
     
     // Step 1: Apply Gaussian blur
-    const blurred = this.applyGaussianBlur(imageData, options.gaussianBlur || 1);
+            const blurred = this.applyGaussianBlur(imageData);
     
     // Step 2: Apply Sobel edge detection
     const sobelResult = SobelEdgeDetector.detect(blurred, { threshold: 0 });
@@ -101,7 +101,7 @@ export class CannyEdgeDetector {
     return { edges: result, magnitude: sobelResult.magnitude, direction: sobelResult.direction };
   }
 
-  private static applyGaussianBlur(imageData: ImageData, sigma: number): ImageData {
+  private static applyGaussianBlur(imageData: ImageData): ImageData {
     const { width, height, data } = imageData;
     const result = new ImageData(width, height);
     

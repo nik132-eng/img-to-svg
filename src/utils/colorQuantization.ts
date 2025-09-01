@@ -65,7 +65,7 @@ export class KMeansColorQuantizer {
     
     if (colors.length <= options.kMeansClusters) {
       // If we have fewer colors than clusters, return each color as a cluster
-      return colors.map((color, index) => ({
+      return colors.map((color) => ({
         centroid: color,
         pixels: [color],
         boundingBox: { minX: 0, minY: 0, maxX: width - 1, maxY: height - 1 }
@@ -111,8 +111,7 @@ export class KMeansColorQuantizer {
   }
 
   private static runKMeans(colors: Color[], centroids: Color[], options: ColorQuantizationOptions): ColorCluster[] {
-    const k = centroids.length;
-    let clusters: ColorCluster[] = centroids.map(centroid => ({
+    const clusters: ColorCluster[] = centroids.map(centroid => ({
       centroid: { ...centroid },
       pixels: [],
       boundingBox: { minX: 0, minY: 0, maxX: 0, maxY: 0 }
@@ -149,7 +148,7 @@ export class KMeansColorQuantizer {
     // Calculate bounding boxes for each cluster
     clusters.forEach(cluster => {
       if (cluster.pixels.length > 0) {
-        cluster.boundingBox = this.calculateClusterBoundingBox(cluster.pixels);
+        cluster.boundingBox = this.calculateClusterBoundingBox();
       }
     });
     
@@ -189,7 +188,7 @@ export class KMeansColorQuantizer {
     return hasConverged;
   }
 
-  private static calculateClusterBoundingBox(pixels: Color[]): { minX: number; minY: number; maxX: number; maxY: number } {
+  private static calculateClusterBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } {
     // This is a simplified bounding box calculation
     // In a real implementation, you'd track x,y coordinates of pixels
     return { minX: 0, minY: 0, maxX: 100, maxY: 100 };
@@ -329,6 +328,15 @@ export class RegionGrowingDetector {
       b: Math.round(sum.b / colors.length),
       a: Math.round(sum.a / colors.length)
     };
+  }
+
+  private static colorDistance(color1: Color, color2: Color): number {
+    const dr = color1.r - color2.r;
+    const dg = color1.g - color2.g;
+    const db = color1.b - color2.b;
+    const da = color1.a - color2.a;
+    
+    return Math.sqrt(dr * dr + dg * dg + db * db + da * da);
   }
 }
 

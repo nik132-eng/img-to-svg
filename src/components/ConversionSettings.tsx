@@ -108,9 +108,9 @@ export function ConversionSettings({ onSettingsChange, isOpen, onToggle }: Conve
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
-                    onClick={() => handleSettingChange('colorMode', 'color')}
+                    onClick={() => handleSettingChange('colorMode', ColorMode.Color)}
                     className={`p-3 rounded-lg border-2 transition-all ${
-                      settings.colorMode === 'color'
+                      settings.colorMode === ColorMode.Color
                         ? 'border-gray-500 bg-gray-50 text-gray-700'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
@@ -121,9 +121,9 @@ export function ConversionSettings({ onSettingsChange, isOpen, onToggle }: Conve
                     </div>
                   </button>
                   <button
-                    onClick={() => handleSettingChange('colorMode', 'binary')}
+                    onClick={() => handleSettingChange('colorMode', ColorMode.Binary)}
                     className={`p-3 rounded-lg border-2 transition-all ${
-                      settings.colorMode === 'binary'
+                      settings.colorMode === ColorMode.Binary
                         ? 'border-gray-500 bg-gray-50 text-gray-700'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
@@ -185,9 +185,9 @@ export function ConversionSettings({ onSettingsChange, isOpen, onToggle }: Conve
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
-                    onClick={() => handleSettingChange('hierarchical', 'stacked')}
+                    onClick={() => handleSettingChange('hierarchical', HierarchicalMode.Stacked)}
                     className={`p-3 rounded-lg border-2 transition-all ${
-                      settings.hierarchical === 'stacked'
+                      settings.hierarchical === HierarchicalMode.Stacked
                         ? 'border-gray-500 bg-gray-50 text-gray-700'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
@@ -200,9 +200,9 @@ export function ConversionSettings({ onSettingsChange, isOpen, onToggle }: Conve
                     </div>
                   </button>
                   <button
-                    onClick={() => handleSettingChange('hierarchical', 'cutout')}
+                    onClick={() => handleSettingChange('hierarchical', HierarchicalMode.Cutout)}
                     className={`p-3 rounded-lg border-2 transition-all ${
-                      settings.hierarchical === 'cutout'
+                      settings.hierarchical === HierarchicalMode.Cutout
                         ? 'border-gray-500 bg-gray-50 text-gray-700'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
@@ -224,9 +224,9 @@ export function ConversionSettings({ onSettingsChange, isOpen, onToggle }: Conve
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
-                    onClick={() => handleSettingChange('mode', 'spline')}
+                    onClick={() => handleSettingChange('mode', PathSimplifyMode.Spline)}
                     className={`p-3 rounded-lg border-2 transition-all ${
-                      settings.mode === 'spline'
+                      settings.mode === PathSimplifyMode.Spline
                         ? 'border-gray-500 bg-gray-50 text-gray-700'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
@@ -239,9 +239,9 @@ export function ConversionSettings({ onSettingsChange, isOpen, onToggle }: Conve
                     </div>
                   </button>
                   <button
-                    onClick={() => handleSettingChange('mode', 'polygon')}
+                    onClick={() => handleSettingChange('mode', PathSimplifyMode.Polygon)}
                     className={`p-3 rounded-lg border-2 transition-all ${
-                      settings.mode === 'polygon'
+                      settings.mode === PathSimplifyMode.Polygon
                         ? 'border-gray-500 bg-gray-50 text-gray-700'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}

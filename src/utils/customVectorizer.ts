@@ -4,7 +4,7 @@
 
 import { SobelEdgeDetector, CannyEdgeDetector, AdaptiveEdgeDetector, EdgeDetectionResult, EdgeDetectionOptions } from './edgeDetection';
 import { PathTracingFactory, PathTracingOptions, Path } from './pathTracing';
-import { KMeansColorQuantizer, RegionGrowingDetector, HierarchicalRegionOrganizer, ColorQuantizationOptions, Region } from './colorQuantization';
+import { RegionGrowingDetector, HierarchicalRegionOrganizer, ColorQuantizationOptions, Region } from './colorQuantization';
 import { ConversionSettings, CustomAlgorithmSettings, VectorizationResult, EdgeDetectionType, PathTracingAlgorithm } from '@/types/conversion';
 
 export interface CustomVectorizationOptions {
@@ -166,11 +166,11 @@ export class CustomVectorizer {
     options: CustomVectorizationOptions
   ): Promise<Region[]> {
     // Perform K-means clustering (stored for potential future use)
-    const _clusters = KMeansColorQuantizer.quantize(imageData, {
-      ...options.colorQuantization,
-      kMeansClusters: options.customSettings.colorQuantization.kMeansClusters,
-      colorSimilarityThreshold: options.customSettings.colorQuantization.colorSimilarityThreshold
-    });
+    // const _clusters = KMeansColorQuantizer.quantize(imageData, {
+    //   ...options.colorQuantization,
+    //   kMeansClusters: options.customSettings.colorQuantization.kMeansClusters,
+    //   colorSimilarityThreshold: options.customSettings.colorQuantization.colorSimilarityThreshold
+    // });
     
     // Perform region growing
     const regions = RegionGrowingDetector.detectRegions(imageData, {
@@ -205,7 +205,7 @@ export class CustomVectorizer {
     
     // Add regions as filled shapes
     regions.forEach(region => {
-      svg += this.generateRegionSVG(region, options);
+      svg += this.generateRegionSVG(region);
     });
     
     // Add paths from edge detection
@@ -234,7 +234,7 @@ export class CustomVectorizer {
     return definitions;
   }
 
-  private static generateRegionSVG(region: Region, _options: CustomVectorizationOptions): string {
+  private static generateRegionSVG(region: Region): string {
     const { boundingBox } = region;
     const color = region.averageColor;
     

@@ -171,13 +171,13 @@ export function ConversionQueue({
 
     // Add conversion settings as query parameters
     const params = new URLSearchParams({
-      colorMode: settings.colorMode,
+      colorMode: settings.colorMode.toString(),
       colorPrecision: settings.colorPrecision.toString(),
       filterSpeckle: settings.filterSpeckle.toString(),
       spliceThreshold: settings.spliceThreshold.toString(),
       cornerThreshold: settings.cornerThreshold.toString(),
-      hierarchical: settings.hierarchical,
-      mode: settings.mode,
+      hierarchical: settings.hierarchical.toString(),
+      mode: settings.mode.toString(),
       layerDifference: settings.layerDifference.toString(),
       lengthThreshold: settings.lengthThreshold.toString(),
       maxIterations: settings.maxIterations.toString(),

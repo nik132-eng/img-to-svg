@@ -9,7 +9,7 @@ import { ZipDownloader } from '@/components/ZipDownloader';
 import { ShareButton } from '@/components/ShareButton';
 import { ConversionSettings as ConversionSettingsType } from '@/components/ConversionSettings';
 import { ClientOnly } from '@/components/ClientOnly';
-import { CustomAlgorithmTester } from '@/components/CustomAlgorithmTester';
+import { ColorMode, HierarchicalMode, PathSimplifyMode } from '@/types/conversion';
 import React from 'react'; // Added for React.useMemo
 
 // Lazy load components with proper error handling
@@ -80,18 +80,20 @@ export default function HomePage() {
   const [useBulkMode, setUseBulkMode] = useState(false);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false); // Add this state
   const [conversionSettings, setConversionSettings] = useState<ConversionSettingsType>({
-    colorMode: 'color',
+    colorMode: ColorMode.Color,
     colorPrecision: 6,
     filterSpeckle: 4,
     spliceThreshold: 45,
     cornerThreshold: 60,
-    hierarchical: 'stacked',
-    mode: 'spline',
+    hierarchical: HierarchicalMode.Stacked,
+    mode: PathSimplifyMode.Spline,
     layerDifference: 5,
     lengthThreshold: 5,
     maxIterations: 2,
     pathPrecision: 5,
   });
+
+
 
   const handleConvert = async () => {
     if (!image) return;
@@ -106,13 +108,13 @@ export default function HomePage() {
 
       // Add conversion settings as query parameters
       const params = new URLSearchParams({
-        colorMode: conversionSettings.colorMode,
+        colorMode: conversionSettings.colorMode.toString(),
         colorPrecision: conversionSettings.colorPrecision.toString(),
         filterSpeckle: conversionSettings.filterSpeckle.toString(),
         spliceThreshold: conversionSettings.spliceThreshold.toString(),
         cornerThreshold: conversionSettings.cornerThreshold.toString(),
-        hierarchical: conversionSettings.hierarchical,
-        mode: conversionSettings.mode,
+        hierarchical: conversionSettings.hierarchical.toString(),
+        mode: conversionSettings.mode.toString(),
         layerDifference: conversionSettings.layerDifference.toString(),
         lengthThreshold: conversionSettings.lengthThreshold.toString(),
         maxIterations: conversionSettings.maxIterations.toString(),
@@ -237,6 +239,8 @@ export default function HomePage() {
     document.addEventListener('paste', handlePaste);
     return () => document.removeEventListener('paste', handlePaste);
   }, []);
+
+
 
   // Function to create a combined SVG from multiple conversion results
   const createCombinedSVG = React.useCallback((results: { fileName: string; svgContent: string }[]): string => {
@@ -392,12 +396,12 @@ export default function HomePage() {
 
         {/* Main Content */}
         <div className="flex-1 w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 main-content">
-          {/* Custom Algorithm Tester - Development Only */}
-          {process.env.NODE_ENV === 'development' && (
+          {/* Custom Algorithm Tester - Hidden for now */}
+          {/* {process.env.NODE_ENV === 'development' && (
             <div className="mb-6">
               <CustomAlgorithmTester />
             </div>
-          )}
+          )} */}
           
           {/* SEO Content Section */}
           <div className="hidden">
@@ -588,6 +592,19 @@ export default function HomePage() {
                           <span>Clear Image</span>
                         </div>
                       </button>
+                      
+                      {/* Background Remove Button - Hidden for now */}
+                      {/* <button
+                        onClick={() => setShowBackgroundRemoval(true)}
+                        className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-xl font-bold hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                      >
+                        <div className="flex items-center justify-center space-x-2">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L20 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6l.586-.586a2 2 0 012.828 0L20 8m-6-6L16 4m-2-2l1.586-1.586a2 2 0 012.828 0L20 4m-6-6L16 4" />
+                          </svg>
+                          <span>Remove Background</span>
+                        </div>
+                      </button> */}
                     </div>
                   </div>
                 )}
@@ -1112,6 +1129,16 @@ export default function HomePage() {
           </React.Suspense>
         </ChunkErrorBoundary>
       )}
+
+      {/* Background Removal Tool - Hidden for now */}
+      {/* {image && (
+        <BackgroundRemovalTool
+          imageData={imageData}
+          onBackgroundRemoved={setImageData}
+          isOpen={showBackgroundRemoval}
+          onToggle={() => setShowBackgroundRemoval(!showBackgroundRemoval)}
+        />
+      )} */}
     </div>
   );
 }
