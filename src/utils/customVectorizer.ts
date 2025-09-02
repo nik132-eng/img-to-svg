@@ -6,6 +6,7 @@ import { SobelEdgeDetector, CannyEdgeDetector, AdaptiveEdgeDetector, EdgeDetecti
 import { PathTracingFactory, PathTracingOptions, Path } from './pathTracing';
 import { RegionGrowingDetector, HierarchicalRegionOrganizer, ColorQuantizationOptions, Region } from './colorQuantization';
 import { ConversionSettings, CustomAlgorithmSettings, VectorizationResult, EdgeDetectionType, PathTracingAlgorithm } from '@/types/conversion';
+import { measurePerformance } from './common';
 
 export interface CustomVectorizationOptions {
   edgeDetection: EdgeDetectionOptions;
@@ -78,32 +79,40 @@ export class CustomVectorizer {
       console.log('Starting custom vectorization with options:', finalOptions);
       
       // Step 1: Edge Detection
-      const edgeResult = await this.performEdgeDetection(imageData, finalOptions);
-      console.log('Edge detection completed, found edges:', edgeResult.edges);
+      const edgeResult = await measurePerformance('Edge Detection', () => 
+        this.performEdgeDetection(imageData, finalOptions)
+      );
+      console.log('Edge detection completed, found edges:', edgeResult.result.edges);
       
       // Step 2: Path Tracing
-      const paths = await this.performPathTracing(edgeResult, finalOptions);
-      console.log('Path tracing completed, found paths:', paths.length);
+      const paths = await measurePerformance('Path Tracing', () => 
+        this.performPathTracing(edgeResult.result, finalOptions)
+      );
+      console.log('Path tracing completed, found paths:', paths.result.length);
       
       // Step 3: Color Quantization and Region Detection
-      const regions = await this.performColorQuantization(imageData, finalOptions);
-      console.log('Color quantization completed, found regions:', regions.length);
+      const regions = await measurePerformance('Color Quantization', () => 
+        this.performColorQuantization(imageData, finalOptions)
+      );
+      console.log('Color quantization completed, found regions:', regions.result.length);
       
       // Step 4: Generate SVG
-      const svg = await this.generateSVG(paths, regions, imageData, finalOptions);
-      console.log('SVG generation completed, length:', svg.length);
+      const svg = await measurePerformance('SVG Generation', () => 
+        this.generateSVG(paths.result, regions.result, imageData, finalOptions)
+      );
+      console.log('SVG generation completed, length:', svg.result.length);
       
       // Step 5: Calculate quality metrics
-      const quality = this.calculateQualityMetrics(imageData, svg, startTime);
+      const quality = this.calculateQualityMetrics(imageData, svg.result, startTime);
       
       // Step 6: Calculate metadata
-      const metadata = this.calculateMetadata(imageData, paths, regions);
+      const metadata = this.calculateMetadata(imageData, paths.result, regions.result);
       
       const processingTime = performance.now() - startTime;
       console.log(`Custom vectorization completed in ${processingTime.toFixed(2)}ms`);
       
       return {
-        svg,
+        svg: svg.result,
         quality,
         metadata
       };

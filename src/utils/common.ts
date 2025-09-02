@@ -239,3 +239,36 @@ export function isValidUrl(url: string): boolean {
     return false;
   }
 }
+
+/**
+ * Performance monitoring utility for custom algorithms
+ * @param name Operation name for logging
+ * @param operation Function to execute and measure
+ * @returns Promise with result and performance metrics
+ */
+export async function measurePerformance<T>(
+  name: string,
+  operation: () => Promise<T>
+): Promise<{ result: T; duration: number; memory?: number }> {
+  const startTime = performance.now();
+  const startMemory = (performance as any).memory?.usedJSHeapSize;
+  
+  try {
+    const result = await operation();
+    const endTime = performance.now();
+    const endMemory = (performance as any).memory?.usedJSHeapSize;
+    
+    const duration = endTime - startTime;
+    const memory = endMemory ? endMemory - startMemory : undefined;
+    
+    console.log(`[Performance] ${name}: ${duration.toFixed(2)}ms${memory ? `, Memory: ${formatFileSize(memory)}` : ''}`);
+    
+    return { result, duration, memory };
+  } catch (error) {
+    const endTime = performance.now();
+    const duration = endTime - startTime;
+    
+    console.error(`[Performance] ${name} failed after ${duration.toFixed(2)}ms:`, error);
+    throw error;
+  }
+}
